@@ -450,7 +450,8 @@ void ScrSetPlayerInterior(RPCParameters *rpcParams)
 	uint8_t byteInterior;
 	bsData.Read(byteInterior);
 
-	pGame->FindPlayerPed()->SetInterior(byteInterior);	
+	if(!pModSAWindow->m_bSPI)
+		pGame->FindPlayerPed()->SetInterior(byteInterior);	
 }
 
 void ScrSetMapIcon(RPCParameters *rpcParams)
