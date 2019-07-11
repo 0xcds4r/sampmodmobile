@@ -90,7 +90,7 @@ CNetGame::CNetGame(char* szHostOrIp, int iPort, const char* szPlayerName, const 
 	if(pChatWindow) {
 		pChatWindow->AddDebugMessage("{FFFFFF}SA-MP {B9C9BF}" SAMP_VERSION " {FFFFFF}Started");
 		pChatWindow->AddInfoMessage(" ");
-		pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF} SA-MP Mod Mobile " MODSA_VERSION " by {00F600}QDS Team");
+		pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF} SA-MP Mod Mobile " MODSA_VERSION " by {00F600}QDS Team // modifed by Codeesar");
 		pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF} Community: vk.com/mobile.samp");
 		pChatWindow->AddInfoMessage(" ");
 	}
