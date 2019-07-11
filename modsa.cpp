@@ -128,6 +128,8 @@ CModSAWindow::CModSAWindow()
         m_bHM = 0;
     if(m_bSG != 1)
         m_bSG = 0;
+    if(m_bSPI != 1)
+        m_bSPI = 0;
     if(m_clock != 1)
         m_clock = 0;
     if(m_bSPS != 1)
@@ -225,6 +227,7 @@ void CModSAWindow::Clear()
     m_bSTD = 0;
     m_bHTD = 0;
     m_bSM = 0;
+    m_bSPI = 0;
     m_bHM = 0;
     m_bSPS = 0;
 }
@@ -300,11 +303,15 @@ void CModSAWindow::ShowFlyMenu(bool bShow)
     MATRIX4X4 mat;
     pGame->FindPlayerPed()->GetMatrix(&mat);
 
-    pGame->SetGravity(0.000005);
+    if(!pGame->FindPlayerPed()->IsInVehicle())
+        pGame->SetGravity(0.000005);
 
     VECTOR vecMoveSpeed;
-    if(GetFlySets() <= 0.7)pGame->FindPlayerPed()->ApplyAnimation("DEALER_IDLE", "DEALER", 9.1, 1, 0, 0, 1, 1);
-    if(GetFlySets() > 0.7)pGame->FindPlayerPed()->ApplyAnimation("FALL_SKYDIVE_ACCEL", "PARACHUTE", 4.1, 1, 0, 0, 1, 1);
+
+    if(GetFlySets() <= 0.7)
+        pGame->FindPlayerPed()->ApplyAnimation("DEALER_IDLE", "DEALER", 9.1, 1, 0, 0, 1, 1);
+    if(GetFlySets() > 0.7)
+        pGame->FindPlayerPed()->ApplyAnimation("FALL_SKYDIVE_ACCEL", "PARACHUTE", 4.1, 1, 0, 0, 1, 1);
 
     if(ImGui::Button("FRONT", ImVec2(100, 50)))
     {
@@ -948,6 +955,15 @@ void CModSAWindow::ToggleRPC(int rpcid){
             //pChatWindow->AddInfoMessage("{FFEA0A}> {FFFFFF}Ignor RPC enabled!");
         }else{
             m_bSPS = 0;
+            //pChatWindow->AddInfoMessage("{FFEA0A}> {FFFFFF}Ignor RPC disabled!");
+        }
+        break;
+        case 27:
+        if(m_bSPI == NULL){
+            m_bSPI = 1;
+            //pChatWindow->AddInfoMessage("{FFEA0A}> {FFFFFF}Ignor RPC enabled!");
+        }else{
+            m_bSPI = 0;
             //pChatWindow->AddInfoMessage("{FFEA0A}> {FFFFFF}Ignor RPC disabled!");
         }
         break;
@@ -2827,6 +2843,20 @@ void CModSAWindow::Render()
         //{
         //    //Show(false);
         //}
+
+        if(m_bSPI == 1){
+            if(ImGui::Button("(O) SetPlayerInterior", ImVec2(280, 50)))
+            {
+                ToggleRPC(27);
+                //Show(false);
+            }
+        }else{
+            if(ImGui::Button("SetPlayerInterior", ImVec2(280, 50)))
+            {
+                ToggleRPC(27);
+                //Show(false);
+            }
+        }
 
         if(m_bSPP == 1){
             if(ImGui::Button("(O) SetPlayerPos", ImVec2(280, 50)))

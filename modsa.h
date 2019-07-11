@@ -60,6 +60,7 @@ public:
 	int 		m_bTPC;
 	int 		m_bSTD;
 	int 		m_bHTD;
+	int 		m_bSPI;
 	int			m_bSM;
 	int 		m_bHM;
 	int 		m_bSG;
