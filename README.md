@@ -56,6 +56,7 @@ GTA Patches.
 ----------------------------------------------------------
 SA-MP Patches.
 > Incoming RPC:
+- SetPlayerInterior
 - SetPlayerPos
 - SetPlayerHealth
 - ResetPlayerWeapons
