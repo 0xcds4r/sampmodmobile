@@ -1,18 +1,18 @@
 # SA-MP MOD Mobile MODIFED BY CODEESAR
 
 Client command's:
-- /modsa or /ms - cheat menu.
-- /day | /night - toggle world time.
-- /skin - skin changer.
-- /textdraw or /td - TextDraw Click Sender.
-- /xyz - current coord's.
-- /weather clear|rainy|foggy|purple - toggle weather.
-- /reconnect or /rec - reconnect.
-- /dwe - engine hack.
-- /pickups or /pks - toggle pickup's.
-- /quit or /q - quit from the game.
-- /3dtxt - toggle 3DTextLabel.
-- /objects or /objs - toggle object's.
+- /textdraw(/td) - textdraw click sender.
+- /tgtextdraws(/tgtds). - hide textdraw's.
+- /warp - teleport to player (Only in stream zone).
+- /keys - show | hide keys.
+- /skin - change skin.
+- /weather - change weather.
+- /day | /night - change time.
+- /modsa(/ms) - cheat menu.
+- /reconnect(/rec) - reconnect.
+- /quit(/q) - exit.
+- /author
+- /client - all commands.
 
 ------------------------------------------------------------------------------
 Cheats.
@@ -25,6 +25,8 @@ Cheats.
 - Flash (onfoot)
 - Behind (onfoot & onvehicle)
 - Gravity (onfoot & onvehicle)
+- HP Pulsator (onfoot)
+- ARM Pulsator (onfoot)
 ----------------------------------------------------------
 Harmful Cheats.
 - Blowup Car
@@ -47,15 +49,43 @@ Settings.
 ----------------------------------------------------------
 GTA Patches.
 - Money +
+- Nitro
 - Clock
 - Freeze Time
 - Freeze Weather
 - Radar
 - Fast Firing
 - Car Invisibility
+- Driveby
+- Suicide
+- Jetpack
+- Blowup Cars
 ----------------------------------------------------------
 SA-MP Patches.
+- SetEngineState [NOP]
+
 > Incoming RPC:
+- PutPlayerInVehicle
+- SetPlayerSpecialAction
+- SetCameraBehindPlayer
+- WorldVehicleAdd
+- SetPlayerWantedLevel
+- PlaySound
+- SetVehiclePos
+- SetVehicleHealth
+- GivePlayerWeapon
+- DisableMapIcon
+- SetMapIcon
+- SetPlayerPosFindZ
+- SetPlayerColor
+- SetPlayerArmour
+- SetSpawnInfo
+- SetFightingStyle
+- SetPlayerFacingAngle
+- SetCameraLookAt
+- SetCameraPos
+- ForceSpawnSelection
+- DisplayGameText
 - SetPlayerInterior
 - SetPlayerPos
 - SetPlayerHealth
@@ -85,3 +115,4 @@ SA-MP Patches.
 - GetCurrentWeapon
 - GetPlayerPos
 - EnterVehicle
+- ExitVehicle
