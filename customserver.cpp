@@ -4,23 +4,20 @@
 #include "gui/gui.h"
 #include "vendor/imgui/imgui_internal.h"
 #include "keyboard.h"
-#include <stdlib.h>
-#include "sets.h"
-#include "servers.h"
 #include "settings.h"
 #include "customserver.h"
 #include "chatwindow.h"
 #include "modsa.h"
 #include "vendor/inih/cpp/INIReader.h"
+
 #include <string.h>
+#include <stdlib.h>
 
 extern CGUI *pGUI;
 extern CGame *pGame;
 extern CNetGame *pNetGame;
 extern CKeyBoard *pKeyBoard;
-extern CServersWindow *pServersWindow;
 extern CChatWindow *pChatWindow;
-extern CSetsWindow *pSetsWindow;
 extern CModSAWindow *pModSAWindow;
 extern CSettings *pSettings;
 
@@ -35,6 +32,7 @@ CCustomServerWindow::CCustomServerWindow()
 	m_bIsActive = false;
 	m_bFixer = false;
 	m_bFixer2 = false;
+	m_bLamb = false;
 }
 
 CCustomServerWindow::~CCustomServerWindow()
@@ -83,6 +81,7 @@ void CCustomServerWindow::Render()
 
 	ImGuiIO &io = ImGui::GetIO();
 	
+	ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8,8));
 
 	ImGui::Begin("> Custom Server", nullptr, 
@@ -105,6 +104,15 @@ void CCustomServerWindow::Render()
 		}
 
 		ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2 + 5) );
+
+		if(!m_bLamb)
+		{
+			if(pSettings->Get().fFixCrash) m_bFixer = true;
+			if(pSettings->Get().fObjects) m_bFixer2 = true;
+			if(pSettings->Get().fTextLabel) pModSAWindow->m_bCTL = true;
+			if(pSettings->Get().fExtOS) pModSAWindow->m_bExtOS = true;
+			m_bLamb = true;
+		}
 
 		if(m_bFixer == false)
 		{
@@ -154,14 +162,27 @@ void CCustomServerWindow::Render()
 
 		if(pModSAWindow->m_bCTL == false)
 		{
-			if(ImGui::Button("(O) 3DTextLabel", ImVec2(165, 50)))
+			if(ImGui::Button("(O) 3DTextLabel", ImVec2(185, 50)))
 			{
 				pModSAWindow->ToggleRPC(15);
 			}
 		}else{
-			if(ImGui::Button("3DTextLabel", ImVec2(165, 50)))
+			if(ImGui::Button("3DTextLabel", ImVec2(185, 50)))
 			{
 				pModSAWindow->ToggleRPC(15);
+			}
+		}
+
+		if(pModSAWindow->m_bExtOS == 0)
+		{
+			if(ImGui::Button("(O) ExtOS", ImVec2(165, 50)))
+			{
+				pModSAWindow->m_bExtOS = 1;
+			}
+		}else{
+			if(ImGui::Button("ExtOS", ImVec2(165, 50)))
+			{
+				pModSAWindow->m_bExtOS = 0;
 			}
 		}
 

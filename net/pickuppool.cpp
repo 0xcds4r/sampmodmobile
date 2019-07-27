@@ -1,8 +1,8 @@
-#include "main.h"
-#include "game/game.h"
-#include "chatwindow.h"
+#include "../main.h"
+#include "../game/game.h"
+#include "../chatwindow.h"
 #include "net/netgame.h"
-#include "settings.h"
+#include "../settings.h"
 
 extern CGame *pGame;
 extern CChatWindow *pChatWindow;

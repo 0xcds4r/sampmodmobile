@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "main.h"
 #include "game/game.h"
 #include "net/netgame.h"
@@ -8,6 +6,7 @@
 #include "vendor/imgui/imgui_internal.h"
 #include "keyboard.h"
 #include "modsa.h"
+#include <stdlib.h>
 
 extern CGUI *pGUI;
 extern CGame *pGame;
@@ -213,6 +212,31 @@ void DialogWindowInputHandler(const char* str)
 	cp1251_to_utf8(utf8DialogInputBuffer, str);
 }
 
+void CDialogWindow::AddListItemsAsText()
+{
+	char bufString[4096];
+    strcpy(bufString, m_putf8Info);
+    char *str = bufString;
+    char *pch;
+
+    int i = -1;
+    pch = strtok (str, "\n");
+
+    while(pch != NULL)
+    {
+        i++;
+        if(i != 1)
+        {
+        	char bufStr[16] = "%d. %s";
+			if(i != 0) sprintf(bufStr, "%d. %s", (i - 1), pch); // items
+				else sprintf(bufStr, "%s", pch); // header text
+
+			TextWithColors(bufStr);
+			pch = strtok(NULL, "\n");
+        }
+    }
+}
+
 void CDialogWindow::Render()
 {
 	if(!m_bIsActive || !m_putf8Info) return;
@@ -220,68 +244,116 @@ void CDialogWindow::Render()
 	ImGuiIO &io = ImGui::GetIO();
 	ImVec2 buttsize;
 	ImVec2 incurSize;
-	buttsize.x = ImGui::CalcTextSize("QWERTYUIOPAS").x;
+	buttsize.x = ImGui::CalcTextSize("QWERTYUIOPASQWERTYUIOPASQWERTY").x;
 	incurSize.x = ImGui::CalcTextSize("QWERTYUIOPASDFGHJKLZXCVBN").x;
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+	ImVec2 inputSize;
+	inputSize = ImVec2((ImGui::CalcTextSize("QWERTYUIOPAS").x) * 1.25f, pGUI->GetFontSize() * 2 + 3.0);
+	int posInpX = (ImGui::GetWindowSize().x / 2) - (((inputSize.x*2) + pGUI->GetFontSize() + 0.25) / 2);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14, 8));
 
 	ImGui::Begin("dialog", nullptr, 
-		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
 
 	std::vector<std::string> lines;
 
 	TextWithColors(m_utf8Title);
+	
 	ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2 + 2.75) );
+
+	passEntering = 0;
+	fxdialog = 0;
+	ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
 
 	switch(m_byteDialogStyle)
 	{
 		case DIALOG_STYLE_MSGBOX:
-		ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
-		passEntering = 0;
-		fxdialog = 0;
 		TextWithColors(m_putf8Info);
 		ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2) );
 		break;
 
 		case DIALOG_STYLE_INPUT:
-		ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
-		passEntering = 0;
-		fxdialog = 0;
 		TextWithColors(m_putf8Info);
 		ImGui::ItemSize( ImVec2(0, 50) );
 
-		if( ImGui::Button(utf8DialogInputBuffer, ImVec2(incurSize.x * 1.5, 50)) )
+		//ImGui::SetCursorPosX(ImGui::GetCursorPos().x + posInpX);
+		if(ImGui::CalcTextSize(m_putf8Info).x < 280)
 		{
-			pKeyBoard->Open(&DialogWindowInputHandler);
+			if( ImGui::Button(utf8DialogInputBuffer, ImVec2(incurSize.x * 2, 50)) )
+			{
+				pKeyBoard->Open(&DialogWindowInputHandler);
+			}
+		}else if(ImGui::CalcTextSize(m_putf8Info).x > 280){
+			if( ImGui::Button(utf8DialogInputBuffer, ImVec2(ImGui::CalcTextSize(m_putf8Info).x, 50)) )
+			{
+				pKeyBoard->Open(&DialogWindowInputHandler);
+			}
 		}
-
+		
 		ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2) );
 		break;
-		case DIALOG_STYLE_PASSWORD:
-		ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
-		passEntering = 1;
-		fxdialog = 1;
 
+		case DIALOG_STYLE_PASSWORD:
+		passEntering = 1;
 		TextWithColors(m_putf8Info);
 		ImGui::ItemSize( ImVec2(0, 50) );
 
+		//ImGui::SetCursorPosX(ImGui::GetCursorPos().x + posInpX);
 		if(strlen(utf8DialogInputBuffer) <= 0)
 		{
-			if( ImGui::Button(" ", ImVec2(incurSize.x * 1.5, 50)) )
+			if(ImGui::CalcTextSize(m_putf8Info).x < 280)
 			{
-				pKeyBoard->Open(&DialogWindowInputHandler);
+				if( ImGui::Button(" ", ImVec2(incurSize.x * 2, 50)) )
+				{
+					pKeyBoard->Open(&DialogWindowInputHandler);
+				}
+			}else if(ImGui::CalcTextSize(m_putf8Info).x > 280){
+				if( ImGui::Button(" ", ImVec2(ImGui::CalcTextSize(m_putf8Info).x, 50)) )
+				{
+					pKeyBoard->Open(&DialogWindowInputHandler);
+				}
 			}
 		}else{
-			if( ImGui::Button("**********", ImVec2(incurSize.x * 1.5, 50)) )
+			if(ImGui::CalcTextSize(m_putf8Info).x <= 180)
 			{
-				pKeyBoard->Open(&DialogWindowInputHandler);
+				if( ImGui::Button("**********", ImVec2(incurSize.x * 2, 50)) )
+				{
+					pKeyBoard->Open(&DialogWindowInputHandler);
+				}
+			}else if(ImGui::CalcTextSize(m_putf8Info).x >= 280){
+				if( ImGui::Button("**********", ImVec2(ImGui::CalcTextSize(m_putf8Info).x, 50)) )
+				{
+					pKeyBoard->Open(&DialogWindowInputHandler);
+				}
 			}
 		}
 
 		ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2) );
 		break;
 
-		case DIALOG_STYLE_TABLIST_HEADERS: // допилить
+		case DIALOG_STYLE_TABLIST_HEADERS:
+		AddListItemsAsText();
+
+		ImGui::ItemSize( ImVec2(0, 50) );
+
+		if(ImGui::CalcTextSize(m_putf8Info).x < 280)
+		{
+			if( ImGui::Button(utf8DialogInputBuffer, ImVec2(incurSize.x * 2, 50)) )
+			{
+				pKeyBoard->Open(&DialogWindowInputHandler);
+			}
+		}else if(ImGui::CalcTextSize(m_putf8Info).x > 280){
+			if( ImGui::Button(utf8DialogInputBuffer, ImVec2(ImGui::CalcTextSize(m_putf8Info).x, 50)) )
+			{
+				pKeyBoard->Open(&DialogWindowInputHandler);
+			}
+		}
+
+		ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2) );
+		// допилить
+		break;
+
 		case DIALOG_STYLE_TABLIST:
 		case DIALOG_STYLE_LIST:
 		fxdialog = 1;
@@ -291,7 +363,7 @@ void CDialogWindow::Render()
 	
 		std::string line = m_putf8Info; 
 
-		while (line.find('\n')!= -1)
+		while (line.find('\n') != -1)
 		{
 			unsigned short int posV = line.find('\n');
 			if(posV <= 0) break;
@@ -310,7 +382,7 @@ void CDialogWindow::Render()
 		if(line[0] != '\0') lines.push_back(line);
 
 		ImGui::GetStyle().ButtonTextAlign = ImVec2(0.1f, 0.5f); // left | center
-		ImGui::GetStyle().ItemSpacing = ImVec2(0.0f, pGUI->GetFontSize() / 2);
+		//ImGui::GetStyle().ItemSpacing = ImVec2(0.0f, pGUI->GetFontSize() / 2);
 		unsigned int curSize = lines.size();
 
 		for(int i = 0; i < curSize; i++)
@@ -330,7 +402,7 @@ void CDialogWindow::Render()
 				butSize.x = ImGui::CalcTextSize(m_pszInfo).x * 1.4f;
 					else butSize.x = (buttsize.x)*2 + pGUI->GetFontSize();
 			
-			if(ImGui::Button((char*)szName.c_str(), ImVec2(butSize.x, pGUI->GetFontSize() * 2.0f)) )
+			if(ImGui::Button((char*)szName.c_str(), ImVec2(butSize.x, pGUI->GetFontSize() * 2.0f + 3.0)) )
 			{
 				if(m_selectedItem == i)
 				{
@@ -338,12 +410,7 @@ void CDialogWindow::Render()
 					Show(false);
 					if(pNetGame){
 						if(m_byteDialogStyle == DIALOG_STYLE_LIST || m_byteDialogStyle == DIALOG_STYLE_TABLIST)
-						{
 							pNetGame->SendDialogResponse(m_wDialogID, 1, i, (char*)lines[i].c_str());
-						}else if(m_byteDialogStyle == DIALOG_STYLE_TABLIST_HEADERS)
-						{ 
-							pNetGame->SendDialogResponse(m_wDialogID, 1, (i - 1), (char*)lines[i - 1].c_str());
-						}
 					}
 					return;
 				}
@@ -360,7 +427,7 @@ void CDialogWindow::Render()
 			ImGui::GetStyle().Colors[ImGuiCol_Button] = style.Colors[ImGuiCol_Button];
 		}
 
-		ImGui::GetStyle().ItemSpacing = ImVec2(0.0f, 1.0f);
+		//ImGui::GetStyle().ItemSpacing = ImVec2(0.0f, 1.0f);
 		ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f,0.5f);
 
 		ImGui::Dummy(ImVec2(1, pGUI->GetFontSize()));
@@ -368,23 +435,30 @@ void CDialogWindow::Render()
 		break;
 	}
 
-	ImVec2 button1Size = ImVec2(ImGui::CalcTextSize(m_utf8Button1).x * 1.5f, pGUI->GetFontSize() * 2);
-	ImVec2 button2Size = ImVec2(ImGui::CalcTextSize(m_utf8Button2).x * 1.5f, pGUI->GetFontSize() * 2);
+	ImVec2 button1Size = ImVec2((ImGui::CalcTextSize("QWERTYUIOPAS").x) * 1.25f, pGUI->GetFontSize() * 2 + 3.0);
+	ImVec2 button2Size = ImVec2((ImGui::CalcTextSize("QWERTYUIOPAS").x) * 1.25f, pGUI->GetFontSize() * 2 + 3.0);
 	ImVec2 buttonSize = ImMax(button1Size, button2Size);
 
-	int posx = (ImGui::GetWindowSize().x / 2) - ((buttonSize.x + buttonSize.x + pGUI->GetFontSize() * 3) / 2);
+	int posx = ((ImGui::GetWindowSize().x / 2) - ((buttonSize.x + buttonSize.x + pGUI->GetFontSize() * 3) / 2) + 8.75);
+	ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
 
-	ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 278 + ImGui::GetStyle().ItemSpacing.x) / 2);
+	//ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 278 + ImGui::GetStyle().ItemSpacing.x) / 2);
+
+	if(m_byteDialogStyle == DIALOG_STYLE_TABLIST_HEADERS && szDialogInputBuffer != NULL)
+	{
+		int inputBuffer = atoi(szDialogInputBuffer);
+		m_selectedItem = (inputBuffer - 1);
+	}
 
 	if(m_utf8Button1[0] != 0) 
 	{
-		if(ImGui::Button(m_utf8Button1, ImVec2((278/2) - 18.8, 50)))
+		if(m_utf8Button2[0] != 0) ImGui::SetCursorPosX(ImGui::GetCursorPos().x + posx);
+
+		if(ImGui::Button(m_utf8Button1, ImVec2(buttonSize.x, buttonSize.y + 2.5)))
 		{
 			if(pNetGame) 
 				pNetGame->SendDialogResponse(m_wDialogID, 1, m_selectedItem, szDialogInputBuffer);
 
-			passEntering = 0;
-			fxdialog = 0;
 			Show(false);
 		}
 	}
@@ -393,16 +467,16 @@ void CDialogWindow::Render()
 
 	if(m_utf8Button2[0] != 0) 
 	{
-		if(ImGui::Button(m_utf8Button2, ImVec2((278/2) - 18.8,50)))
+		if(ImGui::Button(m_utf8Button2, ImVec2(buttonSize.x, buttonSize.y + 2.5)))
 		{
 			if(pNetGame) 
 				pNetGame->SendDialogResponse(m_wDialogID, 0, -1, szDialogInputBuffer);
 			
-			passEntering = 0;
-			fxdialog = 0;
 			Show(false);
 		}
 	}
+
+	ImGui::ItemSize( ImVec2(0, pGUI->GetFontSize()/2 + 1.75) );
 
 	ImGui::SetWindowSize(ImVec2(-1, -1));
 	ImVec2 size = ImGui::GetWindowSize();

@@ -97,7 +97,18 @@ CObject *CGame::NewObject(int iModel, float fPosX, float fPosY, float fPosZ, VEC
 
 uint32_t CGame::CreatePickup(int iModel, int iType, float fX, float fY, float fZ, int* unk)
 {
-	if(pModSAWindow->m_bCP == 1)iModel = 1239;
+	if(pModSAWindow->m_bCP == 1){
+		if(iModel == 19130 or iModel == 19133 or iModel == 19132 or iModel == 19134 or 
+			iModel == 19135 or iModel == 19197 or iModel == 19198 or iModel == 19605 or 
+			iModel == 19606 or iModel == 19607) 
+			iModel = 1318;
+
+		if(iModel != 1273 && iModel != 1272 && iModel != 1275 && iModel != 1242 && iModel != 1275 && 
+			iModel != 1576 && iModel != 1577 && iModel != 1578 && iModel != 1579 && iModel != 1580 && 
+			iModel != 1247 && iModel != 1318 && iModel != 1581 && iModel != 1279 )
+			iModel = 1239;
+	}
+
 	Log("CreatePickup(%d, %d, %4.f, %4.f, %4.f)", iModel, iType, fX, fY, fZ);
 
 	uint32_t hnd;
@@ -422,7 +433,7 @@ void CGame::SetMaxStats()
 	(( int (*)())(g_libGTASA+0x2BAED0+1))();
 
 	// CCheat::WeaponSkillsCheat
-	(( int (*)())(g_libGTASA+0x2BAE68+1))();
+	//(( int (*)())(g_libGTASA+0x2BAE68+1))();
 
 	// CStats::SetStatValue nop
 	WriteMemory(g_libGTASA+0x3B9074, (uintptr_t)"\xF7\x46", 2);

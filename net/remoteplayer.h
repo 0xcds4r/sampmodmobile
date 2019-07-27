@@ -62,6 +62,8 @@ public:
 	void RemoveFromVehicle();
 
 	void StoreOnFootFullSyncData(ONFOOT_SYNC_DATA *pofSync, uint32_t time);
+	void StoreAimFullSyncData(AIM_SYNC_DATA *paSync, uint32_t time);
+	void StoreBulletFullSyncData(BULLET_SYNC_DATA *pbSync, uint32_t time);
 	void StoreInCarFullSyncData(INCAR_SYNC_DATA *picSync, uint32_t time);
 	void StorePassengerFullSyncData(PASSENGER_SYNC_DATA *psSync);
 	void UpdateOnFootPositionAndSpeed(VECTOR *vecPos, VECTOR *vecMoveSpeed);
@@ -106,6 +108,7 @@ private:
 	INCAR_SYNC_DATA		m_icSync;
 	PASSENGER_SYNC_DATA m_psSync;
 	AIM_SYNC_DATA		m_aimSync;
+	BULLET_SYNC_DATA	m_bulletSync;
 
 	VECTOR 				m_vecPosOffset;
 
@@ -120,6 +123,7 @@ private:
 	uint8_t				m_byteSpecialAction;
 	uint8_t				m_byteSeatID;
 
+	// aim
 	uint8_t 			m_byteCamMode;
 	VECTOR 				m_vecAimf1;
 	VECTOR 				m_vecAimPos;
@@ -127,4 +131,12 @@ private:
 	uint8_t 			m_byteCamExtZoom : 6;
 	uint8_t 			m_byteWeaponState : 2;
 	uint8_t 			m_byteAspectRatio;
+
+	// bullet
+	uint8_t 			m_targetType;
+	uint16_t			m_targetId;
+	VECTOR 				m_vecOrigin;
+	VECTOR 				m_vecTarget;
+	VECTOR 				m_vecCenter;
+	uint8_t 			m_weaponId;
 };

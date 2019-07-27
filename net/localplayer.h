@@ -101,6 +101,27 @@ enum eWeaponState
 	WS_RELOADING = 3,
 };
 
+typedef struct _UNOCCUPIED_SYNC_DATA
+{
+	uint16_t vehicleId;
+	uint8_t seatId;
+	VECTOR roll;
+	VECTOR direction;
+	VECTOR position;
+	VECTOR moveSpeed;
+	VECTOR turnSpeed;
+	float vehicleHealth;
+} UNOCCUPIED_SYNC_DATA;
+
+typedef struct _TRAILER_SYNC_DATA
+{
+	uint16_t trailerId;
+	VECTOR position;
+	VECTOR roll;
+	VECTOR direction;
+	VECTOR speed;
+} TRAILER_SYNC_DATA;
+
 typedef struct _AIM_SYNC_DATA
 {
 	uint8_t byteCamMode;
@@ -111,6 +132,16 @@ typedef struct _AIM_SYNC_DATA
 	uint8_t byteWeaponState : 2;	// see eWeaponState
 	uint8_t byteAspectRatio;
 } AIM_SYNC_DATA;
+
+typedef struct _BULLET_SYNC_DATA
+{
+	uint8_t targetType;
+	uint16_t targetId;
+	VECTOR vecOrigin;
+	VECTOR vecTarget;
+	VECTOR vecCenter;
+	uint8_t weaponId;
+} BULLET_SYNC_DATA;
 
 typedef struct _SPECTATOR_SYNC_DATA
 {
@@ -146,6 +177,7 @@ public:
 	void RequestClass(int iClass);
 	void RequestSpawn();
 	bool HandlePassengerEntry();
+	bool HandlePassengerEntryByCommand();
 	void UpdateSurfing();
 	
 	void SendEnterVehicleNotification(VEHICLEID VehicleID, bool bPassenger);
@@ -171,6 +203,7 @@ public:
 	void SendInCarFullSyncData();
 	void SendPassengerFullSyncData();
 	void SendAimSyncData();
+	void SendBulletSyncData();
 
 	void SendFakeOnFootFullSyncData();
 	void SendMenuRow(uint8_t row);
@@ -201,6 +234,8 @@ private:
 	ONFOOT_SYNC_DATA 	m_OnFootData;
 	INCAR_SYNC_DATA 	m_InCarData;
 	PASSENGER_SYNC_DATA m_PassengerData;
+	AIM_SYNC_DATA 		m_AimData;
+	BULLET_SYNC_DATA 	m_BulletData;
 
 	int					m_iSelectedClass;
 	bool				m_bHasSpawnInfo;
@@ -210,6 +245,7 @@ private:
 	uint32_t 			m_dwLastSendTick;
 	uint32_t			m_dwLastSendSpecTick;
 	uint32_t			m_dwLastSendAimTick;
+	uint32_t			m_dwLastSendBulletTick;
 	uint32_t 			m_dwLastUpdateOnFootData;
 	uint32_t			m_dwLastUpdateInCarData;
 	uint32_t 			m_dwLastUpdatePassengerData;

@@ -1,10 +1,10 @@
-#include "main.h"
+#include "../main.h"
 #include "gui/gui.h"
 #include "game/game.h"
 #include "chatwindow.h"
 #include "netgame.h"
-#include "dialog.h"
-#include "modsa.h"
+#include "../dialog.h"
+#include "../modsa.h"
 
 extern CNetGame *pNetGame;
 extern CChatWindow *pChatWindow;

@@ -12,8 +12,8 @@
 #include "util/util.h"
 
 #define SAMP_VERSION	"0.3.7"
-#define MODSA_VERSION	"0.0.0.4"
-#define MODSA_VERCLR	"Green"
+#define MODSA_VERSION	"0.0.0.5"
+#define MODSA_VERCLR	"Gray"
 
 #define ADDRZERO "93.170.76.34"
 #define ADDRONE "37.143.12.132"
@@ -32,4 +32,6 @@ extern uintptr_t g_libGTASA;
 extern const char* g_pszStorage;
 
 void Log(const char *fmt, ...);
+void ExLog(const char *fmt, ...);
+
 uint32_t GetTickCount();

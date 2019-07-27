@@ -1,8 +1,10 @@
 #include "../main.h"
 #include "gui.h"
+
 #include "../game/game.h"
 #include "../net/netgame.h"
 #include "../game/RW/RenderWare.h"
+
 #include "../chatwindow.h"
 #include "../spawnscreen.h"
 #include "../playertags.h"
@@ -11,14 +13,16 @@
 #include "../keyboard.h"
 #include "../debug.h"
 #include "../settings.h"
-#include "../modsa.h"
+#include "../warp.h"
+
 #include "../menu.h"
-#include "../servers.h"
 #include "../customserver.h"
-#include "../sets.h"
 #include "../textdraw.h"
 #include "../playerslist.h"
+
 #include "../skinchanger.h"
+#include "../modsa.h"
+
 #include <time.h>
 #include <ctime>
 #include <stdio.h>
@@ -28,8 +32,6 @@ extern CModSAWindow *pModSAWindow;
 extern CPlayersList *pPlayersList;
 extern CSkinChanger *pSkinChanger;
 extern CExtraKeyBoard *pExtraKeyBoard;
-extern CServersWindow *pServersWindow;
-extern CSetsWindow *pSetsWindow;
 extern CCustomServerWindow *pCustomServer;
 
 extern CSpawnScreen *pSpawnScreen;
@@ -39,6 +41,7 @@ extern CMenu *pMenu;
 extern CTextDraw *pTextDraw;
 extern CDebug *pDebug;
 extern CChatWindow *pChatWindow;
+extern CTeleportWindow *pTeleportWindow;
 extern CSettings *pSettings;
 extern CKeyBoard *pKeyBoard;
 extern CNetGame *pNetGame;
@@ -135,28 +138,34 @@ void CGUI::Render()
 	if(pChatWindow) 
 		pChatWindow->Render();
 
+	if(m_fCheatsBox)
+		RenderCheatBox();
+
 	if(pExtraKeyBoard) 
 		pExtraKeyBoard->Render();
-	if(pMenu && pMenu->m_bEnabled) 
+	if(pSpawnScreen) 
+		pSpawnScreen->Render();
+	
+	if(pMenu) 
 		pMenu->Render();
-	if(pTextDraw && pTextDraw->m_bIsActive) 
+	if(pTextDraw) 
 		pTextDraw->Render();
-	if(pDialogWindow && pDialogWindow->m_bIsActive) 
-		pDialogWindow->Render();
-	if(pModSAWindow && pModSAWindow->m_bIsActive) 
+	
+	if(pModSAWindow) 
 		pModSAWindow->Render();
-	if(pSkinChanger && pSkinChanger->m_bIsActive)
+	if(pSkinChanger)
 		pSkinChanger->Render();
-	if(pPlayersList && pPlayersList->m_bIsActive)
-		pPlayersList->Render();
-
-	if(m_fCheatsBox) RenderCheatBox();
+	if(pTeleportWindow)
+		pTeleportWindow->Render();
 
 	if(pCustomServer && !pNetGame) 
 		pCustomServer->Render();
 
-	if(pSpawnScreen) 
-		pSpawnScreen->Render();
+	if(pPlayersList)
+		pPlayersList->Render();
+	if(pDialogWindow) 
+		pDialogWindow->Render();
+
 	if(pKeyBoard) 
 		pKeyBoard->Render();
 	
@@ -186,11 +195,8 @@ bool CGUI::OnTouchEvent(int type, bool multi, int x, int y)
 
 		if((x >= m_fCheatsBoxPosX && y >= m_fCheatsBoxPosY) && (x <= m_fCheatsBoxPosX + 80 && y <= m_fCheatsBoxPosY + 120))
 		{
-			if(pNetGame && pNetGame->GetGameState() == GAMESTATE_CONNECTED)
-			{
-				pModSAWindow->m_bMenuStep = 1;
-				pModSAWindow->Show(true);
-			}
+			pModSAWindow->m_bMenuStep = 1;
+			pModSAWindow->Show(true);
 		}
 		break;
 
@@ -235,15 +241,17 @@ void CGUI::RenderCheatBox()
    	if(m_fly == 1)strcat(str, "   - Fly\n");
    	if(m_bd == 1)strcat(str, "   - Behind\n");
    	if(m_gravity == 1)strcat(str, "   - Gravity\n");
+   	if(m_PulsatorHealth == 1)strcat(str, "   - HP Pulsator\n");
+   	if(m_PulsatorArmour == 1)strcat(str, "   - ARM Pulsator\n");
 
    	float cbX, cbY;
 
    	cbX = m_fCheatsBoxPosX;
    	cbY = m_fCheatsBoxPosY;
 
-   	int rCol1 = 248; //(rand() % 248 +240);
-   	int rCol2 = 110; // (rand() % 115 +110);
-   	int rCol3 = 5; //(rand() % 5 +1);
+   	int rCol1 = ( (int) pSettings->Get().fColor1 ); // 248; //(rand() % 248 +240);
+   	int rCol2 = ( (int) pSettings->Get().fColor2 ); // 110; // (rand() % 115 +110);
+   	int rCol3 = ( (int) pSettings->Get().fColor3 ); // 5; //(rand() % 5 +1);
 
    	ImGui::GetBackgroundDrawList()->AddText(
 		ImVec2((cbX + 1.4) + (0.75 * 3.25), (cbY + 1.5)), 

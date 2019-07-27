@@ -3,7 +3,7 @@
 enum ePadKeys
 {
 	// KEY_ 						OnFoot 				InCar
-	KEY_ACTION = 0, 		// TAB 			| 	ALT GR/LCTRL/NUM0	|	1
+	KEY_ACTION,		 		// TAB 			| 	ALT GR/LCTRL/NUM0	|	1
 	KEY_CROUCH, 			// C 			|	H / CAPSLOCK		| 	2
 	KEY_FIRE,				// LCTRL/LMB	|	LALT				| 	4
 	KEY_SPRINT,				// SPACE		| 	W 					|	8

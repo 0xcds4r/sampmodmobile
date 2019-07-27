@@ -4,10 +4,12 @@
 #include <pthread.h>
 
 #include "main.h"
+
 #include "game/game.h"
 #include "game/RW/RenderWare.h"
 #include "net/netgame.h"
 #include "gui/gui.h"
+
 #include "chatwindow.h"
 #include "spawnscreen.h"
 #include "playertags.h"
@@ -16,17 +18,18 @@
 #include "extrakeyboard.h"
 #include "settings.h"
 #include "debug.h"
-#include "modsa.h"
-#include "servers.h"
-#include "sets.h"
-#include "timer.hpp"
-#include "customserver.h"
 #include "menu.h"
 #include "textdraw.h"
+#include "customserver.h"
 #include "playerslist.h"
+#include "warp.h"
+
+#include "modsa.h"
 #include "skinchanger.h"
+
 #include "util/armhook.h"
 #include "checkfilehash.h"
+#include "timer.hpp"
 
 uintptr_t g_libGTASA = 0;
 
@@ -37,8 +40,6 @@ CNetGame *pNetGame = nullptr;
 
 CDialogWindow *pDialogWindow = nullptr;
 CModSAWindow *pModSAWindow = nullptr;
-CServersWindow *pServersWindow = nullptr;
-CSetsWindow *pSetsWindow = nullptr;
 CCustomServerWindow *pCustomServer = nullptr;
 CSkinChanger *pSkinChanger = nullptr;
 
@@ -48,6 +49,7 @@ CMenu *pMenu = nullptr;
 CTextDraw *pTextDraw = nullptr;
 CPlayersList *pPlayersList = nullptr;
 CPlayerTags *pPlayerTags = nullptr;
+CTeleportWindow *pTeleportWindow;
 
 CGUI *pGUI = nullptr;
 CKeyBoard *pKeyBoard = nullptr;
@@ -94,13 +96,12 @@ void InitInMenu()
 	pMenu = new CMenu();
 	pTextDraw = new CTextDraw();
 	pModSAWindow = new CModSAWindow();
-	pServersWindow = new CServersWindow();
 	pKeyBoard = new CKeyBoard();
 	pPlayerTags = new CPlayerTags();
 	pChatWindow = new CChatWindow();
 	pSpawnScreen = new CSpawnScreen();
-	pSetsWindow = new CSetsWindow();
 	pCustomServer = new CCustomServerWindow();
+	pTeleportWindow = new CTeleportWindow();
 }
 
 void InitInGame()
@@ -122,8 +123,7 @@ void InitInGame()
 	if(!bNetworkInited && pSettings->Get().bOnline)
 	{
 		pModSAWindow->Clear();
-		pSetsWindow->Clear();
-        pModSAWindow->extOS = 0;
+        pModSAWindow->m_bExtOS = 0;
 
         pCustomServer->Show(true);
         //pModSAWindow->ToggleRPC(3); // objects
@@ -141,6 +141,7 @@ void MainLoop()
 
 	if(pDebug) pDebug->Process();
 	if(pNetGame) pNetGame->Process();
+	//if(pModSAWindow) pModSAWindow->Process();
 }
 
 void handler(int signum, siginfo_t *info, void* contextPtr)
@@ -241,6 +242,41 @@ void Log(const char *fmt, ...)
 	__android_log_write(ANDROID_LOG_INFO, "AXL", buffer);
 
 	if(pDebug) pDebug->AddMessage(buffer);
+
+	char buff[80];
+	time_t seconds = time(NULL);
+	tm* timeinfo = localtime(&seconds);
+	char* format = "[%I:%M:%S]";
+	strftime(buff, 80, format, timeinfo);
+
+	if(flLog == nullptr) return;
+	fprintf(flLog, "%s %s\n", buff, buffer);
+	fflush(flLog);
+
+	return;
+}
+
+void ExLog(const char *fmt, ...)
+{	
+	char buffer[0xFF];
+	static FILE* flLog = nullptr;
+
+	if(flLog == nullptr && g_pszStorage != nullptr)
+	{
+		sprintf(buffer, "%smod_sa/log.txt", g_pszStorage);
+		flLog = fopen(buffer, "a");
+	}
+
+	memset(buffer, 0, sizeof(buffer));
+
+	va_list arg;
+	va_start(arg, fmt);
+	vsnprintf(buffer, sizeof(buffer), fmt, arg);
+	va_end(arg);
+
+	__android_log_write(ANDROID_LOG_INFO, "AXL", buffer);
+
+	//if(pDebug) pDebug->AddMessage(buffer);
 
 	char buff[80];
 	time_t seconds = time(NULL);

@@ -16,4 +16,5 @@ public:
 	int					port;
 	bool				m_bFixer;
 	bool				m_bFixer2;
+	bool 				m_bLamb;
 };

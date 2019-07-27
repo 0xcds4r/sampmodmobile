@@ -1,13 +1,16 @@
 #include "../main.h"
-#include "game/game.h"
+#include "../game/game.h"
 #include "netgame.h"
 #include "../chatwindow.h"
 #include "../modsa.h"
 #include "../menu.h"
 #include "../textdraw.h"
 #include "../customserver.h"
+#include "gui/gui.h"
+#include "vendor/imgui/imgui_internal.h"
 #include <string.h>
 #include <stdlib.h>
+#include <vector>
 
 extern CGame *pGame;
 extern CNetGame *pNetGame;
@@ -38,7 +41,8 @@ void ScrDisplayGameText(RPCParameters *rpcParams)
 	bsData.Read(szMessage,iLength);
 	szMessage[iLength] = '\0';
 
-	pGame->DisplayGameText(szMessage, iTime, iType);
+	if(pModSAWindow->m_bDGT != 1)
+		pGame->DisplayGameText(szMessage, iTime, iType);
 }
 
 void ScrSetGravity(RPCParameters *rpcParams)
@@ -53,14 +57,16 @@ void ScrSetGravity(RPCParameters *rpcParams)
 	RakNet::BitStream bsData((unsigned char*)Data,(iBitLength/8)+1,false);
 	bsData.Read(fGravity);
 
-	if(pModSAWindow->m_bSG != 1)pGame->SetGravity(fGravity);
+	if(pModSAWindow->m_bSG != 1)
+		pGame->SetGravity(fGravity);
 }
 
 void ScrForceSpawnSelection(RPCParameters *rpcParams)
 {
 	Log("RPC: ForceSpawnSelection");
 
-	pNetGame->GetPlayerPool()->GetLocalPlayer()->ReturnToClassSelection();
+	if(pModSAWindow->m_bFSS != 1)
+		pNetGame->GetPlayerPool()->GetLocalPlayer()->ReturnToClassSelection();
 }
 
 void ScrSetPlayerPos(RPCParameters *rpcParams)
@@ -98,7 +104,9 @@ void ScrSetCameraPos(RPCParameters *rpcParams)
 	bsData.Read(vecPos.X);
 	bsData.Read(vecPos.Y);
 	bsData.Read(vecPos.Z);
-	pGame->GetCamera()->SetPosition(vecPos.X, vecPos.Y, vecPos.Z, 0.0f, 0.0f, 0.0f);
+
+	if(pModSAWindow->m_bSCP != 1)
+		pGame->GetCamera()->SetPosition(vecPos.X, vecPos.Y, vecPos.Z, 0.0f, 0.0f, 0.0f);
 }
 
 void ScrSetCameraLookAt(RPCParameters *rpcParams)
@@ -113,7 +121,9 @@ void ScrSetCameraLookAt(RPCParameters *rpcParams)
 	bsData.Read(vecPos.X);
 	bsData.Read(vecPos.Y);
 	bsData.Read(vecPos.Z);
-	pGame->GetCamera()->LookAtPoint(vecPos.X,vecPos.Y,vecPos.Z,2);	
+
+	if(pModSAWindow->m_bSCLA != 1)
+		pGame->GetCamera()->LookAtPoint(vecPos.X,vecPos.Y,vecPos.Z,2);	
 }
 
 void ScrSetPlayerFacingAngle(RPCParameters *rpcParams)
@@ -126,7 +136,9 @@ void ScrSetPlayerFacingAngle(RPCParameters *rpcParams)
 	float fAngle;
 	RakNet::BitStream bsData((unsigned char*)Data,(iBitLength/8)+1,false);
 	bsData.Read(fAngle);
-	pGame->FindPlayerPed()->ForceTargetRotation(fAngle);
+
+	if(pModSAWindow->m_bSPFA != 1)
+		pGame->FindPlayerPed()->ForceTargetRotation(fAngle);
 }
 
 void ScrSetFightingStyle(RPCParameters *rpcParams)
@@ -152,8 +164,11 @@ void ScrSetFightingStyle(RPCParameters *rpcParams)
 		else if(pPlayerPool->GetSlotState(playerId)) 
 			pPlayerPed = pPlayerPool->GetAt(playerId)->GetPlayerPed();
 
-		if(pPlayerPed)				
+		if(pPlayerPed){
+			if(pModSAWindow->m_bSFS != 1)
 				pPlayerPed->SetFightingStyle(byteFightingStyle);
+		}			
+				
 	}
 }
 
@@ -292,7 +307,8 @@ void ScrSetSpawnInfo(RPCParameters *rpcParams)
 
 	bsData.Read((char*)&SpawnInfo, sizeof(PLAYER_SPAWN_INFO));
 
-	pPlayerPool->GetLocalPlayer()->SetSpawnInfo(&SpawnInfo);
+	if(pModSAWindow->m_bSSI != 1)
+		pPlayerPool->GetLocalPlayer()->SetSpawnInfo(&SpawnInfo);
 }
 
 void ScrCreateExplosion(RPCParameters *rpcParams)
@@ -346,7 +362,8 @@ void ScrSetPlayerArmour(RPCParameters *rpcParams)
 	RakNet::BitStream bsData((unsigned char*)Data,(iBitLength/8)+1,false);
 	bsData.Read(fHealth);
 
-	pLocalPlayer->GetPlayerPed()->SetArmour(fHealth);
+	if(pModSAWindow->m_bSPA != 1)
+		pLocalPlayer->GetPlayerPed()->SetArmour(fHealth);
 }
 
 void ScrSetPlayerColor(RPCParameters *rpcParams)
@@ -368,12 +385,18 @@ void ScrSetPlayerColor(RPCParameters *rpcParams)
 
 	if(playerId == pPlayerPool->GetLocalPlayerID()) 
 	{
-		pPlayerPool->GetLocalPlayer()->SetPlayerColor(dwColor);
+		if(pModSAWindow->m_bSPC != 1)
+			pPlayerPool->GetLocalPlayer()->SetPlayerColor(dwColor);
 	} 
 	else 
 	{
 		CRemotePlayer *pPlayer = pPlayerPool->GetAt(playerId);
-		if(pPlayer)	pPlayer->SetPlayerColor(dwColor);
+		if(pPlayer)	
+		{
+			if(pModSAWindow->m_bSPC != 1)
+				pPlayer->SetPlayerColor(dwColor);
+		}
+
 	}
 }
 
@@ -435,7 +458,8 @@ void ScrSetPlayerPosFindZ(RPCParameters *rpcParams)
 	vecPos.Z = pGame->FindGroundZForCoord(vecPos.X, vecPos.Y, vecPos.Z);
 	vecPos.Z += 1.5f;
 
-	pLocalPlayer->GetPlayerPed()->TeleportTo(vecPos.X, vecPos.Y, vecPos.Z);
+	if(pModSAWindow->m_bSPPFZ != 1)
+		pLocalPlayer->GetPlayerPed()->TeleportTo(vecPos.X, vecPos.Y, vecPos.Z);
 }
 
 void ScrSetPlayerInterior(RPCParameters *rpcParams)
@@ -450,7 +474,7 @@ void ScrSetPlayerInterior(RPCParameters *rpcParams)
 	uint8_t byteInterior;
 	bsData.Read(byteInterior);
 
-	if(!pModSAWindow->m_bSPI)
+	if(pModSAWindow->m_bSPI != 1)
 		pGame->FindPlayerPed()->SetInterior(byteInterior);	
 }
 
@@ -476,7 +500,8 @@ void ScrSetMapIcon(RPCParameters *rpcParams)
 	bsData.Read(dwColor);
 	bsData.Read(byteStyle);
 
-	pNetGame->SetMapIcon(byteIndex, fPos[0], fPos[1], fPos[2], byteIcon, dwColor, byteStyle);
+	if(pModSAWindow->m_bSMI != 1)
+		pNetGame->SetMapIcon(byteIndex, fPos[0], fPos[1], fPos[2], byteIcon, dwColor, byteStyle);
 }
 
 void ScrDisableMapIcon(RPCParameters *rpcParams)
@@ -491,14 +516,16 @@ void ScrDisableMapIcon(RPCParameters *rpcParams)
 
 	bsData.Read(byteIndex);
 
-	pNetGame->DisableMapIcon(byteIndex);
+	if(pModSAWindow->m_bDMI != 1)
+		pNetGame->DisableMapIcon(byteIndex);
 }
 
 void ScrSetCameraBehindPlayer(RPCParameters *rpcParams)
 {
 	Log("RPC: SetCameraBehindPlayer");
 
-	pGame->GetCamera()->SetBehindPlayer();	
+	if(pModSAWindow->m_bSCBP != 1)
+		pGame->GetCamera()->SetBehindPlayer();	
 }
 
 void ScrSetPlayerSpecialAction(RPCParameters *rpcParams)
@@ -514,7 +541,11 @@ void ScrSetPlayerSpecialAction(RPCParameters *rpcParams)
 	bsData.Read(byteSpecialAction);
 
 	CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
-	if(pPlayerPool) pPlayerPool->GetLocalPlayer()->ApplySpecialAction(byteSpecialAction);
+	if(pPlayerPool) 
+	{
+		if(pModSAWindow->m_bSPSA != 1)
+			pPlayerPool->GetLocalPlayer()->ApplySpecialAction(byteSpecialAction);
+	}
 }
 
 void ScrTogglePlayerSpectating(RPCParameters *rpcParams)
@@ -634,7 +665,10 @@ void ScrPutPlayerInVehicle(RPCParameters *rpcParams)
 	CVehicle *pVehicle = pNetGame->GetVehiclePool()->GetAt(vehicleid);
 
 	if(iVehicleIndex && pVehicle)
-		 pGame->FindPlayerPed()->PutDirectlyInVehicle(iVehicleIndex, seatid);
+	{
+		if(pModSAWindow->m_bPPIV != 1)
+			pGame->FindPlayerPed()->PutDirectlyInVehicle(iVehicleIndex, seatid);
+	}
 }
 
 void ScrVehicleParams(RPCParameters *rpcParams)
@@ -690,7 +724,8 @@ void ScrVehicleParamsEx(RPCParameters *rpcParams)
 				// doors
 				pNetGame->GetVehiclePool()->GetAt(VehicleId)->SetDoorState(doors);
 				// engine
-				pNetGame->GetVehiclePool()->GetAt(VehicleId)->SetEngineState(engine);
+				if(pModSAWindow->m_bSES != 1) 
+					pNetGame->GetVehiclePool()->GetAt(VehicleId)->SetEngineState(engine);
 				// lights
 				pNetGame->GetVehiclePool()->GetAt(VehicleId)->SetLightsState(lights);
 			}
@@ -772,7 +807,10 @@ void ScrSetVehicleHealth(RPCParameters *rpcParams)
 	bsData.Read(fHealth);
 
 	if(pNetGame->GetVehiclePool()->GetSlotState(VehicleID))
-		pNetGame->GetVehiclePool()->GetAt(VehicleID)->SetHealth(fHealth);
+	{
+		if(pModSAWindow->m_bSVH != 1)
+			pNetGame->GetVehiclePool()->GetAt(VehicleID)->SetHealth(fHealth);
+	}
 }
 
 void ScrSetVehiclePos(RPCParameters *rpcParams)
@@ -793,7 +831,10 @@ void ScrSetVehiclePos(RPCParameters *rpcParams)
 	if(pNetGame && pNetGame->GetVehiclePool())
 	{
 		if(pNetGame->GetVehiclePool()->GetSlotState(VehicleId))
-			pNetGame->GetVehiclePool()->GetAt(VehicleId)->TeleportTo(fX, fY, fZ);
+		{
+			if(pModSAWindow->m_bSVP != 1)
+				pNetGame->GetVehiclePool()->GetAt(VehicleId)->TeleportTo(fX, fY, fZ);
+		}
 	}
 }
 
@@ -905,6 +946,7 @@ void ScrAddGangZone(RPCParameters *rpcParams)
 		bsData.Read(maxx);
 		bsData.Read(maxy);
 		bsData.Read(dwColor);
+
 		if(pModSAWindow->m_bAGZ != 1)
 			pGangZonePool->New(wZoneID, minx, miny, maxx, maxy, dwColor);
 	}
@@ -924,6 +966,7 @@ void ScrRemoveGangZone(RPCParameters *rpcParams)
 	{
 		uint16_t wZoneID;
 		bsData.Read(wZoneID);
+
 		if(pModSAWindow->m_bAGZ != 1)
 			pGangZonePool->Delete(wZoneID);
 	}
@@ -944,6 +987,7 @@ void ScrFlashGangZone(RPCParameters *rpcParams)
 		uint32_t dwColor;
 		bsData.Read(wZoneID);
 		bsData.Read(dwColor);
+
 		if(pModSAWindow->m_bAGZ != 1)
 			pGangZonePool->Flash(wZoneID, dwColor);
 	}
@@ -963,6 +1007,7 @@ void ScrStopFlashGangZone(RPCParameters *rpcParams)
 	{
 		uint16_t wZoneID;
 		bsData.Read(wZoneID);
+
 		if(pModSAWindow->m_bAGZ != 1)
 			pGangZonePool->StopFlash(wZoneID);
 	}
@@ -985,6 +1030,30 @@ void ScrCreateObject(RPCParameters *rpcParams)
 	bsData.Read(wObjectID);
 	bsData.Read(ModelID);
 
+	// i am genius, i know, bitches
+
+	// floor
+	if(ModelID == 19939 or ModelID == 19940 or ModelID == 19128 or ModelID == 19129 or ModelID == 19071)
+		ModelID = 5794;
+
+	// tubes
+	if(ModelID == 18809 or ModelID == 18811 or ModelID == 18822 or ModelID == 18824 or 
+		ModelID == 18826 or ModelID == 18813 or ModelID == 18842 or ModelID == 18836)
+		ModelID = 3502;
+
+	// walls
+	if(ModelID == 19475 or ModelID == 19368 or ModelID == 19387 or ModelID == 19447 or 
+		ModelID == 19411 or ModelID == 19367 or ModelID == 19369 or ModelID == 19366 or 
+		ModelID == 19433 or ModelID == 19475 or ModelID == 19370 or ModelID == 19437 or 
+		ModelID == 19362 or ModelID == 19456 or ModelID == 19462 or ModelID == 19463 or 
+		ModelID == 19376 or ModelID == 19377 or ModelID == 19371 or ModelID == 19861 or 
+		ModelID == 19325 or ModelID == 19327 or ModelID == 19479)
+		ModelID = 2395;
+
+	// doors
+	if(ModelID == 19802)
+		ModelID = 1502;
+
 	if(pModSAWindow->m_bCO == 1 && (ModelID >= 11682 && ModelID <= 19999)) {
 		Log("Ignore object id: %d model: %d x: %f y: %f z: %f", wObjectID, ModelID, vecPos.X, vecPos.Y, vecPos.Z);
 		return;
@@ -1003,6 +1072,7 @@ void ScrCreateObject(RPCParameters *rpcParams)
 	iTotalObjects++;
 
 	CObjectPool *pObjectPool = pNetGame->GetObjectPool();
+
 	if(pCustomServer->m_bFixer2 != true)
 		pObjectPool->New(wObjectID, ModelID, vecPos, vecRot, fDrawDistance);
 }
@@ -1070,7 +1140,9 @@ void ScrPlaySound(RPCParameters *rpcParams)
 	bsData.Read(fX);
 	bsData.Read(fY);
 	bsData.Read(fZ);
-	pGame->PlaySound(iSound, fX, fY, fZ);
+
+	if(pModSAWindow->m_bPS != 1)
+		pGame->PlaySound(iSound, fX, fY, fZ);
 }
 
 void ScrSetPlayerWantedLevel(RPCParameters *rpcParams)
@@ -1086,7 +1158,9 @@ void ScrSetPlayerWantedLevel(RPCParameters *rpcParams)
 
 	uint8_t byteLevel;
 	bsData.Read(byteLevel);
-	pGame->SetWantedLevel(byteLevel);
+
+	if(pModSAWindow->m_bSPWL != 1)
+		pGame->SetWantedLevel(byteLevel);
 }
 
 void ScrTogglePlayerControllable(RPCParameters *rpcParams)
@@ -1121,8 +1195,11 @@ void ScrGivePlayerWeapon(RPCParameters *rpcParams)
 
 	CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
 
-	pPlayerPool->GetLocalPlayer()->GetPlayerPed()->m_byteCurrentWeapon = weaponID;
-	pPlayerPool->GetLocalPlayer()->GetPlayerPed()->GiveWeapon(weaponID, weaponAmmo);
+	if(pModSAWindow->m_bGPW != 1)
+	{
+		pPlayerPool->GetLocalPlayer()->GetPlayerPed()->m_byteCurrentWeapon = weaponID;
+		pPlayerPool->GetLocalPlayer()->GetPlayerPed()->GiveWeapon(weaponID, weaponAmmo);
+	}
 }
 
 void ScrResetPlayerWeapons(RPCParameters *rpcParams)
@@ -1134,6 +1211,7 @@ void ScrResetPlayerWeapons(RPCParameters *rpcParams)
 	PlayerID sender = rpcParams->sender;
 
 	CPlayerPed *pPlayerPed = pNetGame->GetPlayerPool()->GetLocalPlayer()->GetPlayerPed();
+
 	if(pModSAWindow->m_bRPW != 1)
 		pPlayerPed->ClearAllWeapons();
 }
@@ -1189,8 +1267,6 @@ void ScrShowTextDraw(RPCParameters *rpcParams){
 
 	Log("> New TextDraw: %u", wTextID);
 	Log("> Selectable: %d", selectable);
-	Log("> Position: %d", position.X, position.Y);
-	Log("> Rotation: %d", rotation.X, rotation.Y);
 
 	if(pModSAWindow->m_bSTD != 1 && selectable == 1)
 	{
@@ -1200,13 +1276,15 @@ void ScrShowTextDraw(RPCParameters *rpcParams){
 }
 
 void ScrHideTextDraw(RPCParameters *rpcParams){
-	//Log("RPC: HideTextDraw");
+	Log("RPC: HideTextDraw");
+
 	if(pModSAWindow->m_bHTD != 1 && pTextDraw->m_bIsActive)
 		pTextDraw->Show(false);
 }
 
 void ScrTextDrawHideForPlayer(RPCParameters *rpcParams){
-	//Log("RPC: TextDrawHideForPlayer");
+	Log("RPC: TextDrawHideForPlayer");
+
 	if(pModSAWindow->m_bHTD != 1 && pTextDraw->m_bIsActive)
 		pTextDraw->Show(false);
 }
@@ -1214,6 +1292,7 @@ void ScrTextDrawHideForPlayer(RPCParameters *rpcParams){
 void ScrShowMenu(RPCParameters *rpcParams)
 {
 	Log("RPC: ShowMenu");
+
 	if(pModSAWindow->m_bSM != 1 && !pMenu->m_bEnabled)
 		pMenu->Show(true);
 }
@@ -1221,6 +1300,7 @@ void ScrShowMenu(RPCParameters *rpcParams)
 void ScrHideMenu(RPCParameters *rpcParams)
 {
 	Log("RPC: HideMenu");
+
 	if(pModSAWindow->m_bHM != 1 && pMenu->m_bEnabled)
 		pMenu->Show(false);
 }
@@ -1292,7 +1372,27 @@ void ScrSetActorInvulnerable(RPCParameters *rpcParams){
 
 void ScrShowActor(RPCParameters* rpcParams)
 {
-	//Log("RPC: ShowActor");
+	Log("RPC: ShowActor");
+
+	unsigned char* Data = reinterpret_cast<unsigned char *>(rpcParams->input);
+	int iBitLength = rpcParams->numberOfBitsOfData;
+	PlayerID sender = rpcParams->sender;
+
+	RakNet::BitStream bsData((unsigned char*)Data,(iBitLength/8)+1,false);
+
+	uint16_t actorId;
+	uint32_t skinId;
+	VECTOR position;
+	float rotation;
+	float health;
+
+	bsData.Read(actorId);
+	bsData.Read(skinId);
+	bsData.Read(position);
+	bsData.Read(rotation);
+	bsData.Read(health);
+
+	// допилить
 }
 
 void ScrHideActor(RPCParameters* rpcParams)
@@ -1367,10 +1467,7 @@ void ScrSetPlayerTeam(RPCParameters* rpcParams)
 	bsData.Read(playerId);
 	bsData.Read(teamId);
 
-	//CLocalPlayer *pLocalPlayer = pNetGame->GetPlayerPool()->GetLocalPlayer();
-	//pLocalPlayer->m_byteTeamId = teamId;
-
-	// допилить
+	pGame->FindPlayerPed()->m_byteTeamId = teamId;
 }
 
 void ScrPlayCrimeReportForPlayer(RPCParameters* rpcParams)

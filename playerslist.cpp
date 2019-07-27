@@ -48,6 +48,8 @@ void CPlayersList::Render()
 {
 	if(!m_bIsActive) return;
 
+    CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
+
 	ImGuiIO &io = ImGui::GetIO();
 
     ImGui::StyleColorsClassic();
@@ -72,10 +74,13 @@ void CPlayersList::Render()
 
     ImGui::Text("  ID | Name");
 
-    CPlayerPool* pPlayerPool = pNetGame->GetPlayerPool();
-
     ImGui::BeginChild("playersChild", ImVec2(500, 650), true, 
                 ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+    if(pPlayerPool)
+    {
+        ImGui::Text("[%d] %s", pPlayerPool->GetLocalPlayerID(), pPlayerPool->GetLocalPlayerName());
+    }
 
     char szBuf[4096] = "";
 

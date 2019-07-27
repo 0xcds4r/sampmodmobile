@@ -8,15 +8,19 @@
 #include "keyboard.h"
 #include "chatwindow.h"
 #include "net/vehiclepool.h"
-#include <stdlib.h>
-#include <string.h>
 #include "settings.h"
-#include "sets.h"
 #include "modsa.h"
 #include "dialog.h"
 #include "customserver.h"
 #include "net/playerpool.h"
 #include "net/localplayer.h"
+#include "playerslist.h"
+#include "spawnscreen.h"
+#include "menu.h"
+#include "skinchanger.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 extern CGUI *pGUI;
 extern CGame *pGame;
@@ -24,12 +28,17 @@ extern CNetGame *pNetGame;
 extern CKeyBoard *pKeyBoard;
 extern CChatWindow *pChatWindow;
 extern CSettings *pSettings;
-extern CSetsWindow *pSetsWindow;
 extern CModSAWindow *pModSAWindow;
+extern CPlayersList *pPlayersList;
+extern CDialogWindow *pDialogWindow;
+extern CSpawnScreen *pSpawnScreen;
+extern CMenu *pMenu;
+extern CSkinChanger *pSkinChanger;
 
 CExtraKeyBoard::CExtraKeyBoard()
 {
 	m_bIsActive = false;
+    m_bClose = false;
 }
 
 CExtraKeyBoard::~CExtraKeyBoard()
@@ -39,10 +48,19 @@ CExtraKeyBoard::~CExtraKeyBoard()
 
 void CExtraKeyBoard::Show(bool bShow)
 {
-	if(pGame) 
-        pGame->FindPlayerPed()->TogglePlayerControllable(!bShow);
-
+    m_fPosX = pGUI->ScaleX( pSettings->Get().fSpawnScreenPosX );
+    m_fPosY = pGUI->ScaleY( pSettings->Get().fSpawnScreenPosY );
+    m_fSizeX = pGUI->ScaleX( pSettings->Get().fSpawnScreenSizeX );
+    m_fSizeY = pGUI->ScaleY( pSettings->Get().fSpawnScreenSizeY );
+    m_fButWidth = m_fSizeX / 3;
+    m_fButHeight = m_fSizeY * 0.9;
 	m_bIsActive = bShow;
+}
+
+void CExtraKeyBoard::ToggleExtraKeyBoard()
+{
+    if(m_bClose) m_bClose = false;
+        else m_bClose = true;
 }
 
 void CExtraKeyBoard::Clear()
@@ -50,132 +68,93 @@ void CExtraKeyBoard::Clear()
 	m_bIsActive = false;
 }
 
-void CExtraKeyBoard::AddKeys()
-{
+void CExtraKeyBoard::SendKeyUsing(int keyId)
+{   
     CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
     CLocalPlayer *pLocalPlayer = 0;
     if(pPlayerPool) pLocalPlayer = pPlayerPool->GetLocalPlayer();
 
-    if(ImGui::Button("ALT", ImVec2(350, 50)))
-    {
-         key = ID_KEY_ALT;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
+    switch(keyId){
+        case 0:
+            key = ID_KEY_ENTER;
+            pLocalPlayer->SendFakeOnFootFullSyncData();
+        break;
 
-    if(ImGui::Button("C", ImVec2(350, 50)))
-    {
-         key = ID_KEY_C;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
+        case 1:
+            key = ID_KEY_ALT;
+            pLocalPlayer->SendFakeOnFootFullSyncData();
+        break;
     }
-
-    if(ImGui::Button("TAB", ImVec2(350, 50)))
-    {
-         key = ID_KEY_TAB;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("LCTRL", ImVec2(350, 50)))
-    {
-         key = ID_KEY_LCTRL;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("SPACE", ImVec2(350, 50)))
-    {
-         key = ID_KEY_SPACE;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("ENTER", ImVec2(350, 50)))
-    {
-         key = ID_KEY_ENTER;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("LSHIFT", ImVec2(350, 50)))
-    {
-         key = ID_KEY_LSHIFT;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("E", ImVec2(350, 50)))
-    {
-         key = ID_KEY_E;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("Q", ImVec2(350, 50)))
-    {
-         key = ID_KEY_Q;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("RMB", ImVec2(350, 50)))
-    {
-         key = ID_KEY_RMB;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("2", ImVec2(350, 50)))
-    {
-         key = ID_KEY_TWO;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("Numpad +", ImVec2(350, 50)))
-    {
-         key = ID_KEY_TWOS;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("Y", ImVec2(350, 50)))
-    {
-         key = ID_KEY_Y;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
-
-    if(ImGui::Button("N", ImVec2(350, 50)))
-    {
-         key = ID_KEY_N;
-         pLocalPlayer->SendFakeOnFootFullSyncData();
-         Show(false);
-    }
+    
 }
 
 void CExtraKeyBoard::Render()
 {
-	if(!m_bIsActive) return;
+	if(!m_bIsActive or m_bClose or pSpawnScreen->m_bEnabled or pDialogWindow->m_bIsActive or 
+        pPlayersList->m_bIsActive or pSkinChanger->m_bIsActive or pMenu->m_bEnabled or pModSAWindow->m_bIsActive) return;
 
 	ImGuiIO &io = ImGui::GetIO();
-    
+
+    ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 
-    ImGui::Begin("> Select the button", nullptr, 
-        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Neckeys", nullptr, 
+    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 
+    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
 
-    AddKeys();
+    CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
+    CLocalPlayer *pLocalPlayer = 0;
+    if(pPlayerPool) pLocalPlayer = pPlayerPool->GetLocalPlayer();
 
-    if(ImGui::Button("Close", ImVec2(350, 50)))
+    m_fButWidth = ImGui::CalcTextSize("QWERTY").x;
+    m_fButHeight = 40;
+
+    if(!pGame->FindPlayerPed()->IsInVehicle())
     {
-         Show(false);
+        if (ImGui::Button("ALT", ImVec2(m_fButWidth, m_fButHeight)))
+        {
+            SendKeyUsing(1);
+        }
+    
+        ImGui::SameLine(0, 5);
+    
+        if (ImGui::Button("TAB", ImVec2(m_fButWidth, m_fButHeight)))
+        {
+            pPlayersList->Show(true);
+        }
+    
+        ImGui::SameLine(0, 5);
+        
+        if (ImGui::Button("ENTER", ImVec2(m_fButWidth, m_fButHeight)))
+        {
+            SendKeyUsing(0);
+        }
+    
+        ImGui::SameLine(0, 5);
+    
+        if (ImGui::Button("G", ImVec2(m_fButWidth, m_fButHeight)))
+        {
+            pLocalPlayer->HandlePassengerEntryByCommand();
+        }
+    } else {
+        if (ImGui::Button("TAB", ImVec2(m_fButWidth, m_fButHeight)))
+        {
+            pPlayersList->Show(true);
+        }
+    
+        ImGui::SameLine(0, 5);
+        
+        if (ImGui::Button("ENTER", ImVec2(m_fButWidth, m_fButHeight)))
+        {
+            SendKeyUsing(0);
+    
+            pLocalPlayer->GetPlayerPed()->ExitCurrentVehicle();
+        }
     }
     
-    ImGui::SetWindowSize(ImVec2(-8, -8));
+    ImGui::SetWindowSize(ImVec2(-1, -1));
     ImVec2 size = ImGui::GetWindowSize();
-    ImGui::SetWindowPos( ImVec2( ((io.DisplaySize.x - size.x)/2), ((io.DisplaySize.y - size.y)/2) ) );
+    
+    ImGui::SetWindowPos(ImVec2(((io.DisplaySize.x - size.x)/2) + 110, ((io.DisplaySize.y - size.y) - 35)));
     ImGui::End();
-    ImGui::PopStyleVar();
 }

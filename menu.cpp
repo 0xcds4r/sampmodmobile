@@ -44,6 +44,7 @@ void CMenu::Render()
 
 	MATRIX4X4 matPlayer;
 	pLocalPlayer->GetPlayerPed()->GetMatrix(&matPlayer);
+	ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f); // center | center
 
 	ImGui::Begin("Menu", nullptr, 
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 

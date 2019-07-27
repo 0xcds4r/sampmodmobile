@@ -40,6 +40,8 @@ public:
 	void SetPlayerName(PLAYERID playerId, char* szName) { strcpy(m_szPlayerNames[playerId], szName); }
 	char* GetPlayerName(PLAYERID playerId){ return m_szPlayerNames[playerId]; }
 
+	uint8_t GetPlayerTeam(PLAYERID playerId);
+
 	PLAYERID FindRemotePlayerIDFromGtaPtr(PED_TYPE * pActor);
 
 private:

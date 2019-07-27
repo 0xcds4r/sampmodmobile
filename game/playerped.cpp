@@ -24,6 +24,7 @@ CPlayerPed::CPlayerPed()
 	SetPlayerPedPtrRecord(m_bytePlayerNumber,(uintptr_t)m_pPed);
 	ScriptCommand(&set_actor_weapon_droppable, m_dwGTAId, 1);
 	ScriptCommand(&set_actor_can_be_decapitated, m_dwGTAId, 0);
+	DisableAutoAim();
 
 	m_dwArrow = 0;
 }
@@ -48,6 +49,8 @@ CPlayerPed::CPlayerPed(uint8_t bytePlayerNumber, int iSkin, float fX, float fY, 
 	ScriptCommand(&set_actor_weapon_droppable, m_dwGTAId, 1);
 	ScriptCommand(&set_actor_immunities, m_dwGTAId, 0, 0, 1, 0, 0);
 	ScriptCommand(&set_actor_can_be_decapitated, m_dwGTAId, 0);
+
+	DisableAutoAim();
 
 	if(pNetGame) SetMoney(pNetGame->m_iDeathDropMoney);
 
@@ -147,6 +150,40 @@ void CPlayerPed::SetInitialState()
 }
 
 // 0.3.7
+void CPlayerPed::StartJetpack()
+{
+	ScriptCommand(&task_jetpack, m_dwGTAId);
+}
+
+// 0.3.7
+void CPlayerPed::HandsUP()
+{
+	ScriptCommand(&task_hands_up, m_dwGTAId, 15000);
+}
+
+void CPlayerPed::PlayDance(int danceId)
+{
+	switch(danceId)
+	{
+		case 1:
+			pGame->FindPlayerPed()->ApplyAnimation("DANCE_LOOP", "WOP", 4.1, 1, 0, 0, 1, 1);
+		break;
+
+		case 2:
+			pGame->FindPlayerPed()->ApplyAnimation("DANCE_LOOP", "GFUNK", 4.1, 1, 0, 0, 1, 1);
+		break;
+
+		case 3:
+			pGame->FindPlayerPed()->ApplyAnimation("DANCE_LOOP", "RUNNINGMAN", 4.1, 1, 0, 0, 1, 1);
+		break;
+
+		case 4:
+			pGame->FindPlayerPed()->ApplyAnimation("STR_LOOP_A", "STRIP", 4.1, 1, 0, 0, 1, 1);
+		break;
+	}
+}
+
+// 0.3.7
 void CPlayerPed::SetHealth(float fHealth)
 {
 	if(!m_pPed) return;
@@ -225,18 +262,18 @@ void CPlayerPed::PutDirectlyInVehicle(int iVehicleID, int iSeat)
 	}
 }
 
-uint8_t CPlayerPed::GetCurrentWeapon()
+int CPlayerPed::GetCurrentWeapon()
 {
 	if(pModSAWindow->m_bGCW != 1)
 		return m_byteCurrentWeapon; 
 			else return 0;
 }
 
-uint8_t CPlayerPed::GetCurrentCharWeapon()
+int CPlayerPed::GetCurrentCharWeapon()
 {
 	for(int i = 0; i <= 46; i++){
 		if(ScriptCommand(&is_char_holding_weapon, m_dwGTAId, i))
-			return (uint8_t)i;
+			return (int)i;
 	}
 }
 
@@ -244,11 +281,13 @@ int CPlayerPed::GetCurrentWeaponSlot(int iWeaponID)
 {
 	if(m_pPed)
 		return ScriptCommand(&get_weapontype_slot, iWeaponID);
+	
 	return -1;
 }
 
 void CPlayerPed::GiveWeapon(int iWeaponID, int iAmmo)
 {
+	if(iWeaponID == 34 or iWeaponID == 33 or iWeaponID == 43 or iWeaponID == 35 or iWeaponID == 36)return;
 	// Brass Knuckles
 	if(iWeaponID == 1){
 		int i = WEAPON_MODEL_BRASSKNUCKLE;
@@ -689,30 +728,43 @@ void CPlayerPed::GiveWeapon(int iWeaponID, int iAmmo)
 		}
 	}
 
-	ScriptCommand(&give_weapon_to_char,m_dwGTAId,iWeaponID,iAmmo);
-	ScriptCommand(&give_weapon_to_player,m_dwGTAId,iWeaponID,iAmmo);
-	ScriptCommand(&set_render_player_weapon);
+	ScriptCommand(&give_weapon_to_char, m_dwGTAId, iWeaponID, iAmmo);
+	//ScriptCommand(&give_weapon_to_player,m_dwGTAId,iWeaponID,iAmmo);
+	//ScriptCommand(&set_render_player_weapon);
 	SetArmedWeapon(iWeaponID);
-
-	m_byteCurrentWeapon = iWeaponID;
 }
 
 
 void CPlayerPed::SetArmedWeapon(int iWeaponType)
 {
-	ScriptCommand(&give_weapon_to_char,m_dwGTAId,iWeaponType, 1);
-	ScriptCommand(&set_current_char_weapon,m_dwGTAId,iWeaponType);
-	ScriptCommand(&set_current_player_weapon,m_dwGTAId,iWeaponType);
-	ScriptCommand(&set_render_player_weapon);
-
 	m_byteCurrentWeapon = iWeaponType;
 }
 
 void CPlayerPed::ClearAllWeapons(){
 	ScriptCommand(&remove_all_char_weapons,m_dwGTAId);
-	ScriptCommand(&set_render_player_weapon);
+	//ScriptCommand(&set_render_player_weapon);
 
 	m_byteCurrentWeapon = 0;
+}
+
+VECTOR CPlayerPed::GetFullAim()
+{
+	CAMERA_AIM *pCam = GameGetInternalAim();
+
+	int dwHitEntity = 0;
+	VECTOR vecPos;
+	vecPos.X = 0.0;
+	vecPos.Y = 0.0;
+	vecPos.Z = 0.0;
+
+	// допилить
+
+	return vecPos;
+}
+
+void CPlayerPed::GetAimZ()
+{
+	// допилить
 }
 
 void unlockPedTask()
@@ -890,6 +942,15 @@ void CPlayerPed::DestroyFollowPedTask()
 void CPlayerPed::ResetDamageEntity()
 {
 
+}
+
+void CPlayerPed::DisableAutoAim()
+{
+	if(!m_pPed) return;
+	if(!GamePool_Ped_GetAt(m_dwGTAId)) return;
+
+	// Universal method
+	ScriptCommand(&set_char_never_targetted, m_dwGTAId, 1);
 }
 
 // 0.3.7
@@ -1142,6 +1203,8 @@ uint16_t CPlayerPed::GetKeys(uint16_t *lrAnalog, uint16_t *udAnalog)
 	wRet <<= 1;
 	// KEY_NO
 	if(LocalPlayerKeys.bKeys[ePadKeys::KEY_NO]) wRet |= 1;
+	// KEY_ACTION
+	if(LocalPlayerKeys.bKeys[ePadKeys::KEY_ACTION]) wRet |= 1;
 
 	memset(LocalPlayerKeys.bKeys, 0, ePadKeys::SIZE);
 

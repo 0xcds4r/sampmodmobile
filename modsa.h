@@ -6,10 +6,16 @@ public:
 	CModSAWindow();
 	~CModSAWindow();
 
+	void Process();
+
 	void Render();
 	void Clear();
 	void Show(bool bShow);
 
+	void UpdateData();
+	void FlyPlayMove(int moveId);
+
+	void ToggleGTAPatch(int gtapatchid);
 	void ToggleCheat(int cheatid);
 	void ToggleRPC(int rpcid);
 	void ToggleTeleport(int posid);
@@ -17,24 +23,30 @@ public:
 	void StoreMarkerXYZ(float x, float y, float z);
 	void ShowFlyMenu(bool bShow);
 
-	void StartBotById(int id);
-
-	void ToggleNoKickTeleport(float x, float y, float z);
-
 	void SetFlySets(float distance);
 	float GetFlySets();
 
-	void ZavodBotTemp(int stepId);
-
 public:
+	/** state */
 	bool		m_bIsActive;
+
+	/** step */
 	int			m_bMenuStep;
+
+	/** cheats */
 	int 		m_bFlyHack;
 	int			m_bGodMode;
 	int			m_bWallHack;
 	int			m_bCols;
 	int 		m_bINVIS;
+	int			m_bAirbreak;
+	int 		m_bFLASH;
+	int			m_bKrutilka;
+	int 		m_bPulsatorHealth;
+	int 		m_bPulsatorArmour;
 
+	/** samp patches */
+	// incoming rpc
 	int			m_bVP;
 	int			m_bVP2;
 	int			m_bVV;
@@ -47,13 +59,9 @@ public:
 	int			m_bNF;
 	int			m_bCP;
 	int			m_bCP2;
-	int			m_bGCW;
 	int			m_bCA;
 	int			m_bSPP;
-	int			m_bGPP;
 	int			m_bCTL;
-	int			m_bEV;
-	int 		m_bFLASH;
 	int			m_bCE;
 	int			m_bSPN;
 	int			m_bAGZ;
@@ -64,22 +72,55 @@ public:
 	int			m_bSM;
 	int 		m_bHM;
 	int 		m_bSG;
-	int 		m_clock;
 	int 		m_bSPS;
-	int			m_bAirbreak;
-	int			fastfire;
-	int			carvisible;
+	int			m_bDGT;
+	int 		m_bFSS;
+	int 		m_bSCP;
+	int 		m_bSCLA;
+	int 		m_bSPFA;
+	int 		m_bSFS;
+	int 		m_bSSI;
+	int 		m_bSPA;
+	int 		m_bSPC;
+	int 		m_bSPPFZ;
+	int 		m_bSMI;
+	int 		m_bDMI;
+	int 		m_bGPW;
+	int 		m_bSVH;
+	int 		m_bSVP;
+	int 		m_bPS;
+	int 		m_bSPWL;
+	int 		m_bWVA;
+	int 		m_bSCBP;
+	int 		m_bSPSA;
+	int	 		m_bPPIV;
+	int 		m_bSES;
 
+	// outcoming RPC
+	int			m_bEV;
+	int			m_bGCW;
+	int			m_bGPP;
+	int 		m_bEXV;
+
+	/** GTA Patches */
+	int 		m_bClock;
+	int			m_bFastfire;
+	int			m_bCarvisible;
+	int			m_bLockWeather;
+	int 		m_bLockTime;
+	int 		m_bRxyz;
+	int 		m_bFlock;
+	int 		m_bRadar;
+
+	/** protection */
 	int			protect;
-	int			m_bKrutilka;
-	int			lockinp;
-	int			lock_weather;
-	int 		lock_time;
-	int 		rxyz;
-	int 		flock;
-	int			botzavod;
-	int 		radar;
 
+	/** settings */
+	int			m_bLockInp;
+	int 		m_bDNames;
+	int			m_bPlayers;
+
+	/** positions */
 	float 		sPos1X;
 	float 		sPos1Y;
 	float 		sPos1Z;
@@ -91,14 +132,6 @@ public:
 	float 		sPos3X;
 	float 		sPos3Y;
 	float 		sPos3Z;
-
-	int 		dnames;
-	int			players;
-
-	int			zbot_reps;
-	int			m_bot;
-	int			extOS;
-	int			curAnim;
 
 	float 		i_x;
 	float 		i_y;
@@ -112,11 +145,18 @@ public:
 	float		sy;
 	float		sz;
 
+	/** inv hack params */
 	float 		cHealth;
 	float		xHealth;
 
+	/** fly hack params */
 	float 		fDist;
 
+	/** network params */
 	char*		m_szAddress;
 	int			m_szPort;
+
+	/** other */
+	int			m_bExtOS;
+	int			m_bCurAnim;
 };

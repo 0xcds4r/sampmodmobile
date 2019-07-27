@@ -67,7 +67,7 @@ bool CChatWindow::OnTouchEvent(int type, bool multi, int x, int y)
 				x >= m_fChatPosX && x <= m_fChatPosX + m_fChatSizeX &&
 				y >= m_fChatPosY && y <= m_fChatPosY + m_fChatSizeY)
 			{
-				if(!pDialogWindow->m_bIsActive && !pPlayersList->m_bIsActive && !pExtraKeyBoard->m_bIsActive)
+				if(!pDialogWindow->m_bIsActive && !pPlayersList->m_bIsActive)
 					pKeyBoard->Open(&ChatWindowInputHandler);
 			}
 			bWannaOpenChat = false;

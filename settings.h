@@ -4,37 +4,49 @@
 
 struct stSettings
 {
-	// client
 	char szNickName[MAX_PLAYER_NAME+1];
 	char szHost[MAX_SETTINGS_STRING+1];
-	int iPort;
 	char szPassword[MAX_SETTINGS_STRING+1];
-
-	// debug
-	bool bDebug;
-	bool bOnline;
-
-	// gui
 	char szFont[40];
-	float fFontSize;
+	
 	int iFontOutline;
+	int iChatMaxMessages;
+	int iPort;
+	int fColor1;
+	int fColor2;
+	int fColor3;
+
 	float fChatPosX;
 	float fChatPosY;
 	float fChatSizeX;
 	float fChatSizeY;
-	int iChatMaxMessages;
+	float fFontSize;
 	float fSpawnScreenPosX;
 	float fSpawnScreenPosY;
 	float fSpawnScreenSizeX;
 	float fSpawnScreenSizeY;
 	float fHealthBarWidth;
 	float fHealthBarHeight;
-
-	// m0d_SA gui
 	float fCheatsBoxWidth;
 	float fCheatsBoxHeight;
+	float fDist;
 
+	bool bDebug;
+	bool bOnline;
 	bool fCheatsBox;
+	bool fCheatInv;
+	bool fCheatWallHack;
+	bool fCheatNoFall;
+	bool fCheatInvis;
+	bool fCheatFlash; 
+	bool fCheatBehind;
+	bool fRadar;
+	bool fFixCrash;
+	bool fObjects;
+	bool fTextLabel;
+	bool fExtOS;
+	bool fClock;
+	bool fFastFire;
 };
 
 class CSettings

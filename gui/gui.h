@@ -59,4 +59,6 @@ public:
 	int 		m_INVIS;
 	int 		m_FLASH;
 	int 		m_Airbreak;
+	int 		m_PulsatorHealth;
+	int 		m_PulsatorArmour;
 };

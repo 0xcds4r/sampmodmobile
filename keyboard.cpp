@@ -1,13 +1,9 @@
 #include "main.h"
-
 #include "gui/gui.h"
 #include "game/game.h"
 #include "keyboard.h"
 #include "settings.h"
 #include "vendor/imgui/imgui_internal.h"
-#include <stdlib.h>
-#include <string.h>
-#include <vector>
 #include "net/netgame.h"
 #include "game/playerped.h"
 #include "chatwindow.h"
@@ -19,9 +15,13 @@
 #include "net/localplayer.h"
 #include "extrakeyboard.h"
 #include "playerslist.h"
-#include "shpora.h"
 #include "skinchanger.h"  
 #include "textdraw.h"
+#include "warp.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 extern CGUI *pGUI;
 extern CSettings *pSettings;
@@ -33,9 +33,9 @@ extern CCamera *pCamera;
 extern CDialogWindow *pDialogWindow;
 extern CExtraKeyBoard *pExtraKeyBoard;
 extern CPlayersList *pPlayersList;
-extern CShpora *pShpora;
 extern CSkinChanger *pSkinChanger;
 extern CTextDraw *pTextDraw;
+extern CTeleportWindow *pTeleportWindow;
 
 CKeyBoard::CKeyBoard()
 {
@@ -207,7 +207,7 @@ void CKeyBoard::Close()
 {
 	m_bEnable = false;
 
-	if(pModSAWindow->lockinp == 0 or pModSAWindow->lockinp == NULL)
+	if(pModSAWindow->m_bLockInp == 0)
 		m_sInput.clear();
 
 	m_iInputOffset = 0;
@@ -338,7 +338,7 @@ void CKeyBoard::DeleteCharFromInput()
 	}
 }
 
-void funct(){
+void reconnectTask(){
 	pNetGame->SetGameState(GAMESTATE_WAIT_CONNECT);
 }
 
@@ -351,9 +351,6 @@ void CKeyBoard::Send()
 		if(m_sInput == "/textdraw" or m_sInput == "/td" && pNetGame){
 			pTextDraw->Show(true);
 			m_bEnable = false;
-		}else if(m_sInput == "/tab" or m_sInput == "/players" && pNetGame){
-			pPlayersList->Show(true);
-			m_bEnable = false;
 		}else if(m_sInput == "/tgtextdraws" or m_sInput == "/tgtds" && pNetGame){
 			if(pModSAWindow->m_bSTD != 1)
 			{
@@ -364,42 +361,12 @@ void CKeyBoard::Send()
 				pModSAWindow->m_bSTD = 0;
 			}
 			m_bEnable = false;
-		}else if(m_sInput == "/keys" && pNetGame){
-			pExtraKeyBoard->Show(true);
+		}else if(m_sInput == "/warp" && pNetGame){
+			pTeleportWindow->Show(true);
 			m_bEnable = false;
-		}else if(m_sInput == "/ca"){
-			CAMERA_AIM *pCam = GameGetInternalAim();
-
-			int dwHitEntity = 0;
-			VECTOR vecPos;
-			vecPos.X = 0.0;
-			vecPos.Y = 0.0;
-			vecPos.Z = 0.0;
-
-			CPlayerPool* pPlayerPool = pNetGame->GetPlayerPool();
-
-			for(PLAYERID playerId = 0; playerId < MAX_PLAYERS; playerId++)
-			{
-				if(pPlayerPool->GetSlotState(playerId) == true)
-				{
-					CRemotePlayer* pPlayer = pPlayerPool->GetAt(playerId);
-
-					if(pPlayer && pPlayer->IsActive())
-					{
-						CPlayerPed* pPlayerPed = pPlayer->GetPlayerPed();
-						pPlayerPed->GetBonePosition(8, &vecPos);
-
-						dwHitEntity = ScriptCommand(&get_line_of_sight, vecPos.X, vecPos.Y, vecPos.Z, pCam->pos1x, pCam->pos1y, pCam->pos1z, 1, 0, 0, 1, 0);
-
-						pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}posX: %f posY: %f posZ: %f", vecPos.X, vecPos.Y, vecPos.Z);
-					}
-				}
-			}
-
-			//pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}f1x - %f f1y - %f f1z - %f", camAim->f1x, camAim->f1y, camAim->f1z);
-			//pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}f2x - %f f2y - %f f2z - %f", camAim->f2x, camAim->f2y, camAim->f2z);
-			//pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}pos1x - %f pos1y - %f pos1z - %f", camAim->pos1x, camAim->pos1y, camAim->pos1z);
-			//pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}pos2x - %f pos2y - %f pos2z - %f", camAim->pos2x, camAim->pos2y, camAim->pos2z);
+		}else if(m_sInput == "/keys" && pNetGame){
+			pExtraKeyBoard->ToggleExtraKeyBoard();
+			m_bEnable = false;
 		}else if(m_sInput == "/skin"){
 			pSkinChanger->Show(true);
 			m_bEnable = false;
@@ -407,50 +374,55 @@ void CKeyBoard::Send()
 			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}Using: /weather clear | rainy | foggy | purple");
 			m_bEnable = false;
 		}else if(m_sInput == "/weather clear"){
-			pModSAWindow->lock_weather = 1;
+			pModSAWindow->m_bLockWeather = 1;
 			pGame->SetWorldWeather(10);
 			m_bEnable = false;
 		}else if(m_sInput == "/weather rainy"){
-			pModSAWindow->lock_weather = 1;
+			pModSAWindow->m_bLockWeather = 1;
 			pGame->SetWorldWeather(16);
 			m_bEnable = false;
 		}else if(m_sInput == "/weather foggy"){
-			pModSAWindow->lock_weather = 1;
+			pModSAWindow->m_bLockWeather = 1;
 			pGame->SetWorldWeather(20);
 			m_bEnable = false;
 		}else if(m_sInput == "/weather purple"){
-			pModSAWindow->lock_weather = 1;
+			pModSAWindow->m_bLockWeather = 1;
 			pGame->SetWorldWeather(45);
 			m_bEnable = false;
-		}else if(m_sInput == "/modsa" or m_sInput == "/ms" && pModSAWindow->protect != 1 && pNetGame &&  pNetGame->GetGameState() == GAMESTATE_CONNECTED){
+		}else if(m_sInput == "/modsa" or m_sInput == "/ms" && pModSAWindow->protect != 1){
 			pModSAWindow->m_bMenuStep = 1;
 			pModSAWindow->Show(true);
 			m_bEnable = false;
 		}else if((m_sInput == "/reconnect" or m_sInput == "/rec")){
 			if(pNetGame->GetGameState() == GAMESTATE_CONNECTED){
-				pNetGame->ShutDownForGameRestart();
-				pNetGame->GetRakClient()->Disconnect(500);
 				Timer timer;
-				timer.add(std::chrono::milliseconds(15000), funct, true);
+				pNetGame->ShutDownForGameRestart();
+				pNetGame->GetRakClient()->Disconnect(2000);
+				timer.add(std::chrono::milliseconds(15000), reconnectTask, true);
+
 				pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}Reconnect in 15 seconds...");
 			}else{
 				pNetGame->SetGameState(GAMESTATE_WAIT_CONNECT);
 			}
 			m_bEnable = false;
 		}else if(m_sInput == "/day"){
-			pModSAWindow->lock_time = 1;
+			pModSAWindow->m_bLockTime = 1;
 			pGame->SetWorldTime(14, 0);
 			m_bEnable = false;
 		}else if(m_sInput == "/night"){
-			pModSAWindow->lock_time = 1;
+			pModSAWindow->m_bLockTime = 1;
 			pGame->SetWorldTime(0, 0);
 			m_bEnable = false;
 		}else if(m_sInput == "/q" or m_sInput == "/quit"){
 			exit(0);
 			m_bEnable = false;
 		}else if(m_sInput == "/author"){
-			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}Client by QDS Team");
+			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}Client created by QDS Team");
 			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}https://vk.com/mobile.samp");
+			// // // // // // // // // // // // // // // // // // // // // // // // // // //
+			pChatWindow->AddInfoMessage(" ");
+			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}Client modifed by Codeesar");
+			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}https://vk.com/artemkodisarov");
 			m_bEnable = false;
 		}else if(m_sInput == "/client"){
 			pChatWindow->AddInfoMessage("{E8E311}> {FFFFFF}/quit(/q) | /day | /night | /weather | /author | /modsa(/ms)");

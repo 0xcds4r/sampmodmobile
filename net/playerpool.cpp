@@ -1,9 +1,10 @@
-#include "main.h"
-#include "game/game.h"
+#include "../main.h"
+#include "../game/game.h"
 #include "netgame.h"
 #include "../playerslist.h"
 
 extern CPlayersList *pPlayersList;
+extern CGame *pGame;
 
 CPlayerPool::CPlayerPool()
 {
@@ -53,6 +54,11 @@ bool CPlayerPool::New(PLAYERID playerId, char *szPlayerName, bool IsNPC)
 	}
 
 	return false;
+}
+
+uint8_t CPlayerPool::GetPlayerTeam(PLAYERID playerId)
+{
+	return (uint8_t)pGame->FindPlayerPed()->m_byteTeamId;
 }
 
 bool CPlayerPool::Delete(PLAYERID playerId, uint8_t byteReason)

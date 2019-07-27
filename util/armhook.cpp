@@ -1,63 +1,74 @@
 #include "../main.h"
+#include "armhook.h"
 #include <sys/mman.h>
 
+// ---------------------------------------------------------------------------------- //
 #define HOOK_PROC "\x01\xB4\x01\xB4\x01\x48\x01\x90\x01\xBD\x00\xBF\x00\x00\x00\x00"
-
+// -------------------------------------------------------------------------------- //
 uintptr_t mmap_start 	= 0;
 uintptr_t mmap_end		= 0;
+// ----------------------------------------------------------------------------- //
 uintptr_t memlib_start	= 0;
 uintptr_t memlib_end	= 0;
 
+
+// ----------------------------------------------------------------------- //
+
+void InitHookStuff()
+{
+    //LOGI("ARM: InitHookStuff");
+
+    memlib_start = g_libGTASA + 0x180044;
+    memlib_end = memlib_start + 0x290;
+
+    mmap_start = (uintptr_t)mmap(0, PAGE_SIZE, PROT_WRITE | PROT_READ | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    mprotect((void*)(mmap_start & 0xFFFFF000), PAGE_SIZE, PROT_READ | PROT_EXEC | PROT_WRITE);
+    mmap_end = (mmap_start + PAGE_SIZE);
+}
+
 void UnFuck(uintptr_t ptr)
 {
+    //LOGI("ARM: UnFuck");
+
 	mprotect((void*)(ptr & 0xFFFFF000), PAGE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);
+}
+
+void WriteMemory(uintptr_t dest, uintptr_t src, size_t size)
+{
+    //LOGI("ARM: WriteMemory");
+
+    UnFuck(dest);
+    memcpy((void*)dest, (void*)src, size);
+    cacheflush(dest, dest+size, 0);
+}
+
+void ReadMemory(uintptr_t dest, uintptr_t src, size_t size)
+{
+    //LOGI("ARM: ReadMemory");
+
+    UnFuck(src);
+    memcpy((void*)dest, (void*)src, size);
 }
 
 void NOP(uintptr_t addr, unsigned int count)
 {
+    //LOGI("ARM: NOP");
+
     UnFuck(addr);
 
     for(uintptr_t ptr = addr; ptr != (addr+(count*2)); ptr += 2)
     {
         *(char*)ptr = 0x00;
-        *(char*)(ptr+1) = 0x46;
+        *(char*)(ptr + 1) = 0x46;
     }
 
     cacheflush(addr, (uintptr_t)(addr + count*2), 0);
 }
 
-void WriteMemory(uintptr_t dest, uintptr_t src, size_t size)
-{
-	UnFuck(dest);
-	memcpy((void*)dest, (void*)src, size);
-	cacheflush(dest, dest+size, 0);
-}
-
-void ReadMemory(uintptr_t dest, uintptr_t src, size_t size)
-{
-    UnFuck(src);
-    memcpy((void*)dest, (void*)src, size);
-}
-
-void InitHookStuff()
-{
-    Log("Initializing hook system..");
-	memlib_start = g_libGTASA+0x180044;
-	memlib_end = memlib_start + 0x290;
-
-	mmap_start = (uintptr_t)mmap(0, PAGE_SIZE, PROT_WRITE | PROT_READ | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	mprotect((void*)(mmap_start & 0xFFFFF000), PAGE_SIZE, PROT_READ | PROT_EXEC | PROT_WRITE);
-	mmap_end = (mmap_start + PAGE_SIZE);
-}
-
-void JMPCode(uintptr_t func, uintptr_t addr)
-{
-	uint32_t code = ((addr-func-4) >> 12) & 0x7FF | 0xF000 | ((((addr-func-4) >> 1) & 0x7FF | 0xB800) << 16);
-    WriteMemory(func, (uintptr_t)&code, 4);
-}
-
 void WriteHookProc(uintptr_t addr, uintptr_t func)
 {
+    //LOGI("ARM: WriteHookProc");
+
     char code[16];
     memcpy(code, HOOK_PROC, 16);
     *(uint32_t*)&code[12] = (func | 1);
@@ -66,13 +77,7 @@ void WriteHookProc(uintptr_t addr, uintptr_t func)
 
 void SetUpHook(uintptr_t addr, uintptr_t func, uintptr_t *orig)
 {
-	Log("SetUpHook: 0x%X -> 0x%X", addr, func);
-
-    if(memlib_end < (memlib_start + 0x10) || mmap_end < (mmap_start + 0x20))
-    {
-        Log("SetUpHook: space limit reached");
-        std::terminate();
-    }
+    //LOGI("ARM: SetUpHook");
 
     ReadMemory(mmap_start, addr, 4);
     WriteHookProc(mmap_start+4, addr+4);
@@ -86,7 +91,7 @@ void SetUpHook(uintptr_t addr, uintptr_t func, uintptr_t *orig)
 
 void InstallMethodHook(uintptr_t addr, uintptr_t func)
 {
-	Log("InstallMethodHook: func: 0x%X -> 0x%X", addr, func);
+    //LOGI("ARM: InstallMethodHook");
 
     UnFuck(addr);
     *(uintptr_t*)addr = func;
@@ -94,7 +99,7 @@ void InstallMethodHook(uintptr_t addr, uintptr_t func)
 
 void CodeInject(uintptr_t addr, uintptr_t func, int reg)
 {
-    Log("CodeInject: 0x%X -> 0x%x (register: r%d)", addr, func, reg);
+    //LOGI("ARM: CodeInject");
 
     char injectCode[12];
 
@@ -110,4 +115,12 @@ void CodeInject(uintptr_t addr, uintptr_t func, int reg)
     *(uintptr_t*)&injectCode[8] = func;
 
     WriteMemory(addr, (uintptr_t)injectCode, 12);
+}
+
+void JMPCode(uintptr_t func, uintptr_t addr)
+{
+    //LOGI("ARM: JMPCode");
+
+    uint32_t code = ((addr-func-4) >> 12) & 0x7FF | 0xF000 | ((((addr-func-4) >> 1) & 0x7FF | 0xB800) << 16);
+    WriteMemory(func, (uintptr_t)&code, 4);
 }

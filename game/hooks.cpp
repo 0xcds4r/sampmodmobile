@@ -7,12 +7,14 @@
 #include "../modsa.h"
 #include "../net/localplayer.h"
 #include "playerped.h"
+#include "../playerslist.h"
 #include "../timer.hpp"
 
 extern CNetGame *pNetGame;
 extern CGame *pGame;
 extern CGUI *pGUI;
 extern CModSAWindow *pModSAWindow;
+extern CPlayersList *pPlayersList;
 
 // Neiae/SAMP
 bool g_bPlaySAMP = false;
@@ -158,6 +160,8 @@ void MainMenu_OnStartSAMP()
 
 	// StartGameScreen::OnNewGameCheck()
 	(( void (*)())(g_libGTASA+0x261C8C+1))();
+	// CLoadingScreen::RenderLoadingBar()
+	//(( void (*)())(g_libGTASA+0x3D7B2C+1))();
 
 	g_bPlaySAMP = true;
 	return;
@@ -231,6 +235,13 @@ void CLoadingScreen_DisplayPCScreen_hook()
 	}
 
 	return;
+}
+
+void (*CLoadingScreen_RenderLoadingBar)();
+void CLoadingScreen_RenderLoadingBar_hook()
+{
+	Log("CLoadingScreen::RenderLoadingBar");
+	CLoadingScreen_RenderLoadingBar();
 }
 
 /* ====================================================== */
@@ -574,9 +585,9 @@ void InstallHooks()
 	SetUpHook(g_libGTASA+0x3DBA88, (uintptr_t)CRadar__GetRadarTraceColor_hook, (uintptr_t*)&CRadar__GetRadarTraceColor);
 	SetUpHook(g_libGTASA+0x3DAF84, (uintptr_t)CRadar__SetCoordBlip_hook, (uintptr_t*)&CRadar__SetCoordBlip);
 	SetUpHook(g_libGTASA+0x3DE9A8, (uintptr_t)CRadar__DrawRadarGangOverlay_hook, (uintptr_t*)&CRadar__DrawRadarGangOverlay);
-
 	SetUpHook(g_libGTASA+0x482E60, (uintptr_t)CTaskComplexEnterCarAsDriver_hook, (uintptr_t*)&CTaskComplexEnterCarAsDriver);
 	SetUpHook(g_libGTASA+0x4833CC, (uintptr_t)CTaskComplexLeaveCar_hook, (uintptr_t*)&CTaskComplexLeaveCar);
+
 	CodeInject(g_libGTASA+0x2D99F4, (uintptr_t)PickupPickUp_hook, 1);
 
 	HookCPad();

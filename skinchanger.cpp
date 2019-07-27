@@ -85,14 +85,8 @@ void CSkinChanger::Render()
 			char *strskinid = szSkinIDInputBuffer;
 			unsigned int skinid = atoi(strskinid);
 
-			//if(pModSAWindow->protect != 1)
-			//{
-			//	pGame->FindPlayerPed()->SetModelIndex(skinid);
-			//}else{
-				if(skinid != 0 && skinid != 99 && skinid != 92) pGame->FindPlayerPed()->SetModelIndex(skinid);
-					else pChatWindow->AddInfoMessage("{FFEA0A}> {FFFFFF}You can not use this skin!");
-			//}
-			
+			pGame->FindPlayerPed()->SetModelIndex(skinid);
+
 			Show(false);
 		}
 

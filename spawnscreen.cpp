@@ -6,11 +6,13 @@
 
 #include "game/game.h"
 #include "net/netgame.h"
+#include "dialog.h"
 
 extern CGUI *pGUI;
 extern CNetGame *pNetGame;
 extern CChatWindow *pChatWindow;
 extern CSettings *pSettings;
+extern CDialogWindow *pDialogWindow;
 
 CSpawnScreen::CSpawnScreen()
 {
@@ -28,12 +30,14 @@ CSpawnScreen::CSpawnScreen()
 
 void CSpawnScreen::Render()
 {
-	if(!m_bEnabled) return;
+	if(!m_bEnabled or pDialogWindow->m_bIsActive) return;
 
 	ImGuiIO &io = ImGui::GetIO();
 	CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
 	CLocalPlayer *pLocalPlayer = 0;
 	if(pPlayerPool) pLocalPlayer = pPlayerPool->GetLocalPlayer();
+
+	ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f,0.5f);
 
 	ImGui::Begin("SpawnScreen", nullptr, 
 		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | 

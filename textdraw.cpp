@@ -4,11 +4,13 @@
 #include "gui/gui.h"
 #include "vendor/imgui/imgui_internal.h"
 #include "keyboard.h"
-#include <stdlib.h>
-#include <string.h>
+
 #include "textdraw.h"
 #include "settings.h"
 #include "timer.hpp"
+
+#include <stdlib.h>
+#include <string.h>
 
 extern CGUI *pGUI;
 extern CGame *pGame;
@@ -65,6 +67,7 @@ void CTextDraw::Render()
 	ImGui::StyleColorsClassic();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8,8));
+	ImGui::GetStyle().ButtonTextAlign = ImVec2(0.5f, 0.5f); // center | center
 
 	ImGui::Begin("> TextDraw", nullptr, 
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize);

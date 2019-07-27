@@ -1,7 +1,7 @@
-#include "main.h"
-#include "game/game.h"
+#include "../main.h"
+#include "../game/game.h"
 #include "netgame.h"
-#include "chatwindow.h"
+#include "../chatwindow.h"
 #include "util/armhook.h"
 
 extern CGame *pGame;
@@ -54,15 +54,16 @@ void CRemotePlayer::Process()
 			UpdateOnFootPositionAndSpeed(&m_ofSync.vecPos, &m_ofSync.vecMoveSpeed);
 			UpdateOnFootTargetPosition();
 
-			m_pPlayerPed->GiveWeapon(m_ofSync.byteCurrentWeapon, 9999);
+			m_pPlayerPed->GiveWeapon((int)m_ofSync.byteCurrentWeapon, 9999);
 
 			if(m_pPlayerPed->IsAdded() && m_pPlayerPed->GetCurrentWeapon() != m_ofSync.byteCurrentWeapon) 
 			{
-  				m_pPlayerPed->GiveWeapon(m_ofSync.byteCurrentWeapon, 9999);
+  				m_pPlayerPed->GiveWeapon((int)m_ofSync.byteCurrentWeapon, 9999);
 
   				if(m_pPlayerPed->GetCurrentWeapon() != m_ofSync.byteCurrentWeapon) 
-  					m_pPlayerPed->GiveWeapon(m_ofSync.byteCurrentWeapon, 9999);
+  					m_pPlayerPed->GiveWeapon((int)m_ofSync.byteCurrentWeapon, 9999);
   			}
+  			
 		} else if(GetState() == PLAYER_STATE_DRIVER &&
 			m_byteUpdateFromNetwork == UPDATE_TYPE_INCAR && m_pPlayerPed->IsInVehicle())
 		{
@@ -510,10 +511,105 @@ void CRemotePlayer::StoreOnFootFullSyncData(ONFOOT_SYNC_DATA *pofSync, uint32_t 
 
 		m_byteCurrentWeapon = pofSync->byteCurrentWeapon;
 
-		if (m_byteCurrentWeapon) NOP(g_libGTASA+0x434D94, 6);
+		if(m_byteCurrentWeapon) NOP(g_libGTASA+0x434D94, 6);
 		
 
 		m_byteUpdateFromNetwork = UPDATE_TYPE_ONFOOT;
+
+		if(m_pPlayerPed)
+		{
+			if(m_pPlayerPed->IsInVehicle())
+			{
+				if( m_byteSpecialAction != SPECIAL_ACTION_ENTER_VEHICLE && 
+				m_byteSpecialAction != SPECIAL_ACTION_EXIT_VEHICLE)
+					RemoveFromVehicle();
+			}
+		}
+
+		SetState(PLAYER_STATE_ONFOOT);
+	}
+}
+
+void CRemotePlayer::StoreAimFullSyncData(AIM_SYNC_DATA *paSync, uint32_t dwTime)
+{
+	if( !dwTime || (dwTime - m_dwUnkTime) >= 0 )
+	{
+		m_dwUnkTime = dwTime;
+
+		m_dwLastRecvTick = GetTickCount();
+		memcpy(&m_aimSync, paSync, sizeof(AIM_SYNC_DATA));
+
+		// Cam mode
+		m_byteCamMode = paSync->byteCamMode;
+
+		// Aimf1
+		m_vecAimf1.X = paSync->vecAimf1.X;
+		m_vecAimf1.Y = paSync->vecAimf1.Y;
+		m_vecAimf1.Z = paSync->vecAimf1.Z;
+
+		// Position
+		m_vecAimPos.X = paSync->vecAimPos.X;
+		m_vecAimPos.Y = paSync->vecAimPos.Y;
+		m_vecAimPos.Z = paSync->vecAimPos.Z;
+
+		// AimZ
+		m_fAimZ = paSync->fAimZ;
+
+		// Zoom
+		m_byteCamExtZoom = paSync->byteCamExtZoom;
+
+		// Ratio
+		m_byteAspectRatio = paSync->byteAspectRatio;
+
+		// State
+		m_byteWeaponState = WS_MORE_BULLETS;
+
+		if(m_pPlayerPed)
+		{
+			if(m_pPlayerPed->IsInVehicle())
+			{
+				if( m_byteSpecialAction != SPECIAL_ACTION_ENTER_VEHICLE && 
+				m_byteSpecialAction != SPECIAL_ACTION_EXIT_VEHICLE)
+					RemoveFromVehicle();
+			}
+		}
+
+		SetState(PLAYER_STATE_ONFOOT);
+	}
+}
+
+void CRemotePlayer::StoreBulletFullSyncData(BULLET_SYNC_DATA *pbSync, uint32_t dwTime)
+{
+	if( !dwTime || (dwTime - m_dwUnkTime) >= 0 )
+	{
+		m_dwUnkTime = dwTime;
+
+		m_dwLastRecvTick = GetTickCount();
+		memcpy(&m_bulletSync, pbSync, sizeof(BULLET_SYNC_DATA));
+
+		// target type
+		m_targetType = pbSync->targetType;
+
+		// target id
+		m_targetId = pbSync->targetId;
+
+		// origin
+		m_vecOrigin.X = pbSync->vecOrigin.X;
+		m_vecOrigin.Y = pbSync->vecOrigin.Y;
+		m_vecOrigin.Z = pbSync->vecOrigin.Z;
+
+		// target
+		m_vecTarget.X = pbSync->vecTarget.X;
+		m_vecTarget.Y = pbSync->vecTarget.Y;
+		m_vecTarget.Z = pbSync->vecTarget.Z;
+
+		// center
+		m_vecCenter.X = pbSync->vecCenter.X;
+		m_vecCenter.Y = pbSync->vecCenter.Y;
+		m_vecCenter.Z = pbSync->vecCenter.Z;
+
+		// weapon
+		m_weaponId = pbSync->weaponId;
 
 		if(m_pPlayerPed)
 		{

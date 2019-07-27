@@ -110,7 +110,7 @@ typedef struct _RECT
 void CPlayerTags::Draw(VECTOR* vec, char* szName, uint32_t dwColor, 
 	float fDist, float fHealth, float fArmour, bool bAfk)
 {
-	if(pModSAWindow->dnames == 1)return;
+	if(pModSAWindow->m_bDNames == 1) return;
 	VECTOR TagPos;
 
 	TagPos.X = vec->X;
@@ -137,8 +137,8 @@ void CPlayerTags::Draw(VECTOR* vec, char* szName, uint32_t dwColor,
 	Out.X = (float)((int)Out.X);
 	Out.Y = (float)((int)Out.Y);
 
-	HealthBarColor = ImColor( 0xB9, 0x22, 0x28, 0xFF );
-	HealthBarBGColor = ImColor( 0x4B, 0x0B, 0x14, 0xFF );
+	HealthBarColor = ImColor(247, 11, 11, 255);
+	HealthBarBGColor = ImColor(0, 0, 0, 255);
 
 	float fWidth = pGUI->ScaleX( pSettings->Get().fHealthBarWidth );
 	float fHeight = pGUI->ScaleY( pSettings->Get().fHealthBarHeight );

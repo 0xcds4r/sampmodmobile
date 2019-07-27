@@ -57,8 +57,52 @@ CSettings::CSettings()
 	m_Settings.fHealthBarWidth = reader.GetReal("gui", "HealthBarWidth", 100.0f);
 	m_Settings.fHealthBarHeight = reader.GetReal("gui", "HealthBarHeight", 10.0f);
 
-	// m0d_SA gui
-	m_Settings.fCheatsBoxWidth = reader.GetReal("modsa", "CheatsBoxWidth", 15.0f);
-	m_Settings.fCheatsBoxHeight = reader.GetReal("modsa", "CheatsBoxHeight", 290.0f);
-	m_Settings.fCheatsBox = reader.GetBoolean("modsa", "CheatsBox", true);
+	// ~
+
+	char buff2[0x7F];
+	sprintf(buff2, "%smod_sa/sets.ini", g_pszStorage);
+
+	INIReader reader2(buff2);
+
+	if(reader2.ParseError() < 0)
+	{
+		Log("Error: can't load %s", buff2);
+		std::terminate();
+		return;
+	}
+	size_t length2 = 0;
+
+	// render sets
+	m_Settings.fCheatsBoxWidth = reader2.GetReal("modsa", "CheatsBoxWidth", 55.0f);
+	m_Settings.fCheatsBoxHeight = reader2.GetReal("modsa", "CheatsBoxHeight", 370.0f);
+	m_Settings.fCheatsBox = reader2.GetBoolean("modsa", "CheatsBox", true);
+	m_Settings.fColor1 = reader2.GetInteger("modsa", "color1", 250);
+	m_Settings.fColor2 = reader2.GetInteger("modsa", "color2", 5);
+	m_Settings.fColor3 = reader2.GetInteger("modsa", "color3", 5);
+
+	// cheats
+	m_Settings.fCheatInv = reader2.GetBoolean("modsa", "invincible", false);
+	m_Settings.fCheatWallHack = reader2.GetBoolean("modsa", "wallhack", false);
+	m_Settings.fCheatNoFall = reader2.GetBoolean("modsa", "nofall", false);
+	m_Settings.fCheatInvis = reader2.GetBoolean("modsa", "invisible", false);
+	m_Settings.fCheatFlash = reader2.GetBoolean("modsa", "flash", false);
+	m_Settings.fCheatBehind = reader2.GetBoolean("modsa", "behind", false);
+
+	// gta patches
+	m_Settings.fRadar = reader2.GetBoolean("game", "radar", false);
+	m_Settings.fClock = reader2.GetBoolean("game", "clock", false);
+	m_Settings.fFastFire = reader2.GetBoolean("game", "fastfire", false);
+
+	// custom server sets
+	length = reader2.Get("customserver", "host", "127.0.0.1").copy(m_Settings.szHost, MAX_SETTINGS_STRING);
+	m_Settings.szHost[length] = '\0';
+	m_Settings.iPort = reader2.GetInteger("customserver", "port", 7777);
+
+	m_Settings.fFixCrash = reader2.GetBoolean("customserver", "fixcrash", false);
+	m_Settings.fObjects = reader2.GetBoolean("customserver", "objects", false);
+	m_Settings.fTextLabel = reader2.GetBoolean("customserver", "textlabel", false);
+	m_Settings.fExtOS = reader2.GetBoolean("customserver", "ext_os", false);
+
+	// fly sets
+	m_Settings.fDist = reader2.GetReal("flyhack", "speed", 0.7f);
 }

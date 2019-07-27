@@ -2,8 +2,9 @@
 #include "../game/game.h"
 #include "netgame.h"
 
-#include "chatwindow.h"
-#include "spawnscreen.h"
+#include "../chatwindow.h"
+#include "../spawnscreen.h"
+#include "../extrakeyboard.h"
 
 #include "../modsa.h"
 #include "../vendor/RakNet/SAMP/samp_auth.h"
@@ -11,12 +12,13 @@
 #include "checkfilehash.h"
 
 #define NETGAME_VERSION 4057
-#define AUTH_BS "15121F6F18550C00AC4B4F8A167D0379BB0ACA99043"
+#define AUTH_BS "15121F6F18550C00AC4B4F8A167D0379BB0ACA99043" // todo: generate new
 
 extern CGame *pGame;
 extern CSpawnScreen *pSpawnScreen;
 extern CChatWindow *pChatWindow;
 extern CModSAWindow *pModSAWindow;
+extern CExtraKeyBoard *pExtraKeyBoard;
 
 int iVehiclePoolProcessFlag = 0;
 int iPickupPoolProcessFlag = 0;
@@ -143,7 +145,7 @@ void CNetGame::Process()
 {
 	UpdateNetwork();
 
-	if(m_bHoldTime && pModSAWindow->lock_time != 1)
+	if(m_bHoldTime && pModSAWindow->m_bLockTime != 1)
 		pGame->SetWorldTime(m_byteWorldTime, m_byteWorldMinute);
 
 	// keep the throwable weapon models loaded
@@ -200,12 +202,12 @@ void CNetGame::Process()
 	{
 		if(pChatWindow) pChatWindow->AddDebugMessage("Connecting to %s:%d...", m_szHostOrIp, m_iPort);
 
-		if(!FileCheckSum() && pModSAWindow->protect == 1)
-		{
-			pChatWindow->AddDebugMessage("{E8E311}> {FFFFFF}You cannot play on official servers with modified game files!");
-		} else {
+		//if(!FileCheckSum() && pModSAWindow->protect == 1)
+		//{
+		//	pChatWindow->AddDebugMessage("{E8E311}> {FFFFFF}You cannot play on official servers with modified game files!");
+		//} else {
 			m_pRakClient->Connect(m_szHostOrIp, m_iPort, 0, 0, 5);
-		}
+		//}
 
 		m_dwLastConnectAttempt = GetTickCount();
 		SetGameState(GAMESTATE_CONNECTING);
@@ -277,6 +279,14 @@ void CNetGame::UpdateNetwork()
 
 			case ID_MARKERS_SYNC:
 			Packet_MarkersSync(pkt);
+			break;
+
+			case ID_AIM_SYNC:
+			Packet_AimSync(pkt);
+			break;
+
+			case ID_BULLET_SYNC:
+			Packet_BulletSync(pkt);
 			break;
 		}
 
@@ -495,6 +505,8 @@ void CNetGame::Packet_ConnectionSucceeded(Packet* pkt)
 		pChatWindow->AddDebugMessage("Connected. Joining the game...");
 	SetGameState(GAMESTATE_AWAIT_JOIN);
 
+	pExtraKeyBoard->Show(true);
+
 	RakNet::BitStream bsSuccAuth((unsigned char *)pkt->data, pkt->length, false);
 	PLAYERID MyPlayerID;
 	unsigned int uiChallenge;
@@ -613,6 +625,54 @@ void CNetGame::Packet_PlayerSync(Packet* pkt)
     	if(pPlayer)
     		pPlayer->StoreOnFootFullSyncData(&ofSync, 0);
     }
+}
+
+void CNetGame::Packet_AimSync(Packet *pkt)
+{  
+	CRemotePlayer *pPlayer;
+	RakNet::BitStream bsAimSync((unsigned char *)pkt->data, pkt->length, false);
+	AIM_SYNC_DATA aimSync;
+	PLAYERID playerId;
+
+	bsAimSync.IgnoreBits(8);
+	bsAimSync.Read(playerId);
+
+	if(playerId < 0 || playerId >= MAX_PLAYERS) return;
+
+	memset(&aimSync, 0, sizeof(AIM_SYNC_DATA));
+
+	bsAimSync.Read((char*)&aimSync, sizeof(AIM_SYNC_DATA));
+
+	if(m_pPlayerPool)
+	{
+		pPlayer = m_pPlayerPool->GetAt(playerId);
+		if(pPlayer)
+			pPlayer->StoreAimFullSyncData(&aimSync, 0);
+	}
+}
+
+void CNetGame::Packet_BulletSync(Packet *pkt)
+{  
+	CRemotePlayer *pPlayer;
+	RakNet::BitStream bsBulletSync((unsigned char *)pkt->data, pkt->length, false);
+	BULLET_SYNC_DATA bulletSync;
+	PLAYERID playerId;
+
+	bsBulletSync.IgnoreBits(8);
+	bsBulletSync.Read(playerId);
+
+	if(playerId < 0 || playerId >= MAX_PLAYERS) return;
+
+	memset(&bulletSync, 0, sizeof(BULLET_SYNC_DATA));
+
+	bsBulletSync.Read((char*)&bulletSync, sizeof(BULLET_SYNC_DATA));
+
+	if(m_pPlayerPool)
+	{
+		pPlayer = m_pPlayerPool->GetAt(playerId);
+		if(pPlayer)
+			pPlayer->StoreBulletFullSyncData(&bulletSync, 0);
+	}
 }
 
 void CNetGame::Packet_VehicleSync(Packet* pkt)

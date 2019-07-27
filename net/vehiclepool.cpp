@@ -1,7 +1,7 @@
-#include "main.h"
-#include "game/game.h"
+#include "../main.h"
+#include "../game/game.h"
 #include "netgame.h"
-#include "chatwindow.h"
+#include "../chatwindow.h"
 
 extern CGame *pGame;
 extern CNetGame *pNetGame;
@@ -66,6 +66,8 @@ void CVehiclePool::Process()
 
 bool CVehiclePool::New(NEW_VEHICLE *pNewVehicle)
 {
+	if(pNewVehicle->VehicleID == INVALID_VEHICLE_ID) return false;
+	
 	if(m_pVehicles[pNewVehicle->VehicleID] != nullptr)
 	{
 		pChatWindow->AddDebugMessage("Warning: vehicle %u was not deleted", pNewVehicle->VehicleID);
@@ -106,6 +108,8 @@ bool CVehiclePool::New(NEW_VEHICLE *pNewVehicle)
 				pNewVehicle->dwDoorDamageStatus,
 				pNewVehicle->byteLightDamageStatus);
 		}
+
+		// tune todo
 
 		m_pVehicles[pNewVehicle->VehicleID]->SetWheelPopped(pNewVehicle->byteTireDamageStatus);
 

@@ -11,10 +11,8 @@
 #define	ID_KEY_E 64
 #define	ID_KEY_RMB 128
 #define	ID_KEY_Q 256
-
 #define	ID_KEY_TWO 320
 #define	ID_KEY_TWOS 512
-
 #define	ID_KEY_Y 65536
 #define	ID_KEY_N 131072
 
@@ -27,10 +25,19 @@ public:
 	void Render();
 	void Clear();
 	void Show(bool bShow);
+	void ToggleExtraKeyBoard();
 
-	void AddKeys();
+	void SendKeyUsing(int keyId);
 
 public:
 	bool		m_bIsActive;
+	bool 		m_bClose;
 	uint16_t	key;
+private:
+	float	m_fPosX;
+	float	m_fPosY;
+	float 	m_fSizeX;
+	float 	m_fSizeY;
+	float 	m_fButWidth;
+	float 	m_fButHeight;
 };

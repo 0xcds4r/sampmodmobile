@@ -15,13 +15,11 @@ public:
 
 	void Render();
 	void Clear();
-	void ShowListItems();
-	void ShowListInfo();
-	void GetListItemsCount();
+	
 	void Show(bool bShow);
 	void SetInfo(char* szInfo, int length);
-	void ShowListItemsWithHeader();
-	void ShowListInfoWithHeader();
+
+	void AddListItemsAsText();
 
 	void DrawFormattedText();
 

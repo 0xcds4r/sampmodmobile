@@ -19,6 +19,13 @@ public:
 	void RemoveFromVehicleAndPutAt(float fX, float fY, float fZ);
 	// 0.3.7
 	void SetInitialState();
+	void StartJetpack();
+	void HandsUP();
+	void PlayDance(int danceId);
+	// 0.3.7
+	void DisableAutoAim();
+	VECTOR GetFullAim();
+	void GetAimZ();
 	// 0.3.7
 	void SetHealth(float fHealth);
 	void SetArmour(float fArmour);
@@ -41,8 +48,8 @@ public:
 	int GetCurrentVehicleID();
 	int GetVehicleSeatID();
 
-	uint8_t GetCurrentWeapon();
-	uint8_t GetCurrentCharWeapon();
+	int GetCurrentWeapon();
+	int GetCurrentCharWeapon();
 	int GetCurrentWeaponSlot(int iWeaponID);
 	void SetArmedWeapon(int iWeaponType);
 	void GiveWeapon(int iWeaponID, int iAmmo);
@@ -89,9 +96,10 @@ public:
 
 public:
 	PED_TYPE*	m_pPed;
-	uint8_t		m_byteCurrentWeapon;
+	int		m_byteCurrentWeapon;
 	uint8_t		m_bytePlayerNumber;
 	uint32_t	m_dwArrow;
 	bool		act;
 	float 		sHealth;
+	uint8_t 	m_byteTeamId;
 };

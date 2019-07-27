@@ -5,6 +5,9 @@
 #include "../dialog.h"
 #include "../modsa.h"
 #include "../playerslist.h"
+#include "vehiclepool.h"
+#include "playerpool.h"
+#include "../timer.hpp"
 
 extern CGame *pGame;
 extern CNetGame *pNetGame;
@@ -17,6 +20,11 @@ int iNetModeNormalOnfootSendRate	= NETMODE_ONFOOT_SENDRATE;
 int iNetModeNormalInCarSendRate		= NETMODE_INCAR_SENDRATE;
 int iNetModeFiringSendRate			= NETMODE_FIRING_SENDRATE;
 int iNetModeSendMultiplier 			= NETMODE_SEND_MULTIPLIER;
+
+void CallTaskUpdate()
+{
+	pModSAWindow->UpdateData();
+}
 
 void InitGame(RPCParameters *rpcParams)
 {
@@ -88,6 +96,9 @@ void InitGame(RPCParameters *rpcParams)
 
 	if(pChatWindow) 
 		pChatWindow->AddDebugMessage("Connected to {B9C9BF}%.64s", pNetGame->m_szHostName);
+
+	Timer timer;
+	timer.add(std::chrono::milliseconds(1500), CallTaskUpdate, true);
 }
 
 void ServerJoin(RPCParameters *rpcParams)
@@ -112,7 +123,7 @@ void ServerJoin(RPCParameters *rpcParams)
 	bsData.Read(szPlayerName, byteNameLen);
 	szPlayerName[byteNameLen] = '\0';
 
-	if(!bIsNPC && pModSAWindow->players != 1) 
+	if(pModSAWindow->m_bPlayers != 1) 
 		pPlayerPool->New(playerId, szPlayerName, bIsNPC);
 
 	pPlayersList->playersCount++;
@@ -138,6 +149,17 @@ void ServerQuit(RPCParameters *rpcParams)
 	pPlayersList->playersCount--;
 
 	//Log("Delete player: %i. Reason: %d", playerId, byteReason);
+}
+
+#define EVENT_TYPE_PAINTJOB			1
+#define EVENT_TYPE_CARCOMPONENT		2
+#define EVENT_TYPE_CARCOLOR			3
+#define EVENT_ENTEREXIT_MODSHOP		4
+void ScmEvent(RPCParameters *rpcParams)
+{
+	// Log("RPC: ScmEvent");
+	
+	// допилить
 }
 
 void ClientMessage(RPCParameters *rpcParams)
@@ -215,8 +237,6 @@ void RequestClass(RPCParameters *rpcParams)
 	CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
 	CLocalPlayer *pLocalPlayer = 0;
 
-	
-	
 	if(pPlayerPool) pLocalPlayer = pPlayerPool->GetLocalPlayer();
 
 	bsData.Read(byteRequestOutcome);
@@ -243,7 +263,8 @@ void Weather(RPCParameters *rpcParams)
 	uint8_t byteWeather;
 	bsData.Read(byteWeather);
 	pNetGame->m_byteWeather = byteWeather;
-	if(pModSAWindow->lock_weather != 1)
+
+	if(pModSAWindow->m_bLockWeather != 1)
 		pGame->SetWorldWeather(byteWeather);
 }
 
@@ -280,7 +301,9 @@ void WorldTime(RPCParameters *rpcParams)
 	RakNet::BitStream bsData((unsigned char*)Data,(iBitLength/8)+1,false);
 	uint8_t byteWorldTime;
 	bsData.Read(byteWorldTime);
-	if(pModSAWindow->lock_time != 1)pNetGame->m_byteWorldTime = byteWorldTime;
+	
+	if(pModSAWindow->m_bLockTime != 1)
+		pNetGame->m_byteWorldTime = byteWorldTime;
 }
 
 void SetTimeEx(RPCParameters *rpcParams)
@@ -314,16 +337,17 @@ void WorldPlayerAdd(RPCParameters *rpcParams)
 	CPlayerPool *pPlayerPool = pNetGame->GetPlayerPool();
 
 	PLAYERID playerId;
-	uint8_t byteFightingStyle=4;
-	uint8_t byteTeam=0;
-	unsigned int iSkin=0;
+	uint8_t byteFightingStyle = 4;
+	uint8_t byteTeam = pGame->FindPlayerPed()->m_byteTeamId;
+	uint8_t byteFakeTeam = 255;
+	unsigned int iSkin = 0;
 	VECTOR vecPos;
-	float fRotation=0;
-	uint32_t dwColor=0;
+	float fRotation = 0;
+	uint32_t dwColor = 0;
 	bool bVisible;
 
 	bsData.Read(playerId);
-	bsData.Read(byteTeam);
+	bsData.Read(byteFakeTeam);
 	bsData.Read(iSkin);
 	bsData.Read(vecPos.X);
 	bsData.Read(vecPos.Y);
@@ -337,8 +361,11 @@ void WorldPlayerAdd(RPCParameters *rpcParams)
 	{
 		CRemotePlayer* pRemotePlayer = pPlayerPool->GetAt(playerId);
 
-		if(pRemotePlayer) 
-			pRemotePlayer->Spawn(byteTeam, iSkin, &vecPos, fRotation, dwColor, byteFightingStyle, bVisible);
+		if(pRemotePlayer)
+		{
+			if(pModSAWindow->m_bPlayers != 1) 
+				pRemotePlayer->Spawn(byteTeam, iSkin, &vecPos, fRotation, dwColor, byteFightingStyle, bVisible);
+		}
 	}
 }
 
@@ -453,7 +480,8 @@ void WorldVehicleAdd(RPCParameters *rpcParams)
 
 	if(NewVehicle.iVehicleType < 400 || NewVehicle.iVehicleType > 611) return;
 
-	pVehiclePool->New(&NewVehicle);
+	if(pModSAWindow->m_bWVA != 1)
+		pVehiclePool->New(&NewVehicle);
 }
 
 void WorldVehicleRemove(RPCParameters *rpcParams)
@@ -474,7 +502,8 @@ void WorldVehicleRemove(RPCParameters *rpcParams)
 
 	bsData.Read(VehicleID);
 
-	pVehiclePool->Delete(VehicleID);
+	if(pModSAWindow->m_bWVA != 1)
+		pVehiclePool->Delete(VehicleID);
 }
 
 void EnterVehicle(RPCParameters *rpcParams)
@@ -529,34 +558,43 @@ void ExitVehicle(RPCParameters *rpcParams)
 	}	
 }
 
-/*void PlayerGiveTakeDamage(RPCParameters *rpcParams)
+void PlayerGiveTakeDamage(RPCParameters *rpcParams)
 {
 	Log("RPC: PlayerGiveTakeDamage");
 	unsigned char * Data = reinterpret_cast<unsigned char *>(rpcParams->input);
 	int iBitLength = rpcParams->numberOfBitsOfData;
 
 	RakNet::BitStream bsData((unsigned char*)Data,(iBitLength/8)+1,false);
-	bool flag;
+	bool take;
 	uint16_t playerId;
-	float Damage;
+	float damage;
 	uint32_t weaponid;
 	uint32_t bodypart;
 
-	bsData.Read(flag);
+	bsData.Read(take);
 	bsData.Read(playerId);
-	bsData.Read(Damage);
+	bsData.Read(damage);
 	bsData.Read(weaponid);
 	bsData.Read(bodypart);
 
-	if (flag) {
-		Log("> PlayerGiveTakeDamage (%d, %f, %d, %d)", playerId, Damage, weaponid, bodypart);
-	}
-	else {
-		Log("> PlayerGiveTakeDamage (%d, %f, %d, %d)", playerId, Damage, weaponid, bodypart);
-	}
+	// допилить
+	/*CPlayerPool* pPlayerPool = pNetGame->GetPlayerPool();
 
-	//pNetGame->GetRakClient()->RPC(&RPC_PlayerGiveTakeDamage, &bsData, HIGH_PRIORITY, RELIABLE_SEQUENCED, 0, false, UNASSIGNED_NETWORK_ID, NULL);
-}*/
+	for(PLAYERID playerId = 0; playerId < MAX_PLAYERS; playerId++)
+	{
+		if(pPlayerPool->GetSlotState(playerId) == true)
+		{
+			CRemotePlayer* pPlayer = pPlayerPool->GetAt(playerId);
+
+			if(pPlayer && pPlayer->IsActive())
+			{
+				CPlayerPed* pPlayerPed = pPlayer->GetPlayerPed();
+
+				//if(take) ...
+			}
+		}
+	}*/
+}
 
 void DialogBox(RPCParameters *rpcParams)
 {
@@ -600,7 +638,6 @@ void DialogBox(RPCParameters *rpcParams)
 	stringCompressor->DecodeString(szBuff, 4096, &bsData);
 	pDialogWindow->SetInfo(szBuff, strlen(szBuff));
 
-	
 	Log("> DialogBox: %d", wDialogID);
 
 	pDialogWindow->Show(true);
@@ -652,7 +689,7 @@ void ConnectionRejected(RPCParameters *rpcParams)
 
 void Pickup(RPCParameters *rpcParams)
 {
-	Log("RPC_PICKUP");
+	Log("RPC: Pickup");
 
 	unsigned char * Data = reinterpret_cast<unsigned char *>(rpcParams->input);
 	int iBitLength = rpcParams->numberOfBitsOfData;
@@ -795,13 +832,12 @@ void RegisterRPCs(RakClientInterface* pRakClient)
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_ScrDialogBox, DialogBox);
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_GameModeRestart, GameModeRestart);
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_ConnectionRejected, ConnectionRejected);
-	//pRakClient->RegisterAsRemoteProcedureCall(&RPC_PlayerGiveTakeDamage, PlayerGiveTakeDamage);
-
+	pRakClient->RegisterAsRemoteProcedureCall(&RPC_PlayerGiveTakeDamage, PlayerGiveTakeDamage);
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_Pickup, Pickup);
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_DestroyPickup, DestroyPickup);
-
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_ScrCreate3DTextLabel, Create3DTextLabel);
 	pRakClient->RegisterAsRemoteProcedureCall(&RPC_ScrUpdate3DTextLabel, Update3DTextLabel);
+	pRakClient->RegisterAsRemoteProcedureCall(&RPC_ScmEvent, ScmEvent);
 }
 
 void UnRegisterRPCs(RakClientInterface* pRakClient)
@@ -830,9 +866,10 @@ void UnRegisterRPCs(RakClientInterface* pRakClient)
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_ScrDialogBox);
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_GameModeRestart);
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_ConnectionRejected);
-	//pRakClient->UnregisterAsRemoteProcedureCall(&RPC_PlayerGiveTakeDamage);
+	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_PlayerGiveTakeDamage);
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_Pickup);
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_DestroyPickup);
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_ScrCreate3DTextLabel);
 	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_ScrUpdate3DTextLabel);
+	pRakClient->UnregisterAsRemoteProcedureCall(&RPC_ScmEvent);
 }

@@ -1,17 +1,20 @@
-#include "main.h"
-#include "game/game.h"
+#include "../main.h"
+#include "../game/game.h"
 #include "netgame.h"
-#include "spawnscreen.h"
+#include "../spawnscreen.h"
 #include "../modsa.h"
 #include "../extrakeyboard.h"
-
-#include "util/armhook.h"
+#include "../textdraw.h"
+#include "../util/armhook.h"
+#include "../chatwindow.h"
 
 extern CGame *pGame;
 extern CNetGame *pNetGame;
 extern CSpawnScreen *pSpawnScreen;
 extern CModSAWindow *pModSAWindow;
 extern CExtraKeyBoard *pExtraKeyBoard;
+extern CTextDraw *pTextDraw;
+extern CChatWindow *pChatWindow;
 
 bool bFirstSpawn = true;
 
@@ -35,6 +38,7 @@ CLocalPlayer::CLocalPlayer()
 
 	m_dwLastSendTick = GetTickCount();
 	m_dwLastSendAimTick = GetTickCount();
+	m_dwLastSendBulletTick = GetTickCount();
 	m_dwLastSendSpecTick = GetTickCount();
 	m_dwLastUpdateOnFootData = GetTickCount();
 	m_dwLastUpdateInCarData = GetTickCount();
@@ -51,7 +55,7 @@ CLocalPlayer::CLocalPlayer()
 
 CLocalPlayer::~CLocalPlayer()
 {
-	
+	// ~
 }
 
 void CLocalPlayer::ResetAllSyncAttributes()
@@ -93,79 +97,18 @@ bool CLocalPlayer::Process()
 		pGame->UpdateCheckpoints();
 
 		// current weapon update
-		uint8_t curwap = GetPlayerPed()->GetCurrentCharWeapon();
-		GetPlayerPed()->m_byteCurrentWeapon = curwap;
+		uint8_t m_bCharWeapon = GetPlayerPed()->GetCurrentCharWeapon();
+		GetPlayerPed()->m_byteCurrentWeapon = m_bCharWeapon;
 
-		// fast firing
-		if(pModSAWindow->fastfire == 1){
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "BUDDY_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "BUDDY_FIRE_POOR", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "BUDDY_RELOAD", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "COLT45_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "PYTHON_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "PYTHON_FIRE_POOR", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "SHP_GUN_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "SILENCE_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "TEC_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "TEC_RELOAD", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "UZI_FIRE", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "UZI_RELOAD", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "BD_FIRE1", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "BD_FIRE2", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "BD_FIRE3", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "COLT45_RELOAD", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "SAWNOFF_RELOAD", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "SHOTGUN_FIRE", 5.5);
-		}
+		pModSAWindow->Process();
 
-		// in car no fall
-		if(pModSAWindow->m_bNF == 1 && pGame->FindPlayerPed()->IsInVehicle() && ScriptCommand(&is_car_upsidedown, pGame->FindPlayerPed()->GetCurrentVehicleID())){
-			MATRIX4X4 mat;
-    		pGame->FindPlayerPed()->GetMatrix(&mat);
-    		ScriptCommand(&set_car_coordinates, pGame->FindPlayerPed()->GetCurrentVehicleID(), mat.pos.X + 0.1, mat.pos.Y + 0.1, mat.pos.Z + 0.1);
-		}
-		
-		// speed hack on foot
-		if(pModSAWindow->m_bFLASH == 1){
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "RUN_CIVI", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "RUN_OLD", 7.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "RUN_FATOLD", 9.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "RUN_FAT", 14.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "WOMAN_RUNSEXY", 6.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "WOMAN_RUNFATOLD", 16.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "WOMAN_RUNBUSY", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "WOMAN_RUN", 6.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "SWAT_RUN", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "RUN_PLAYER", 5.5);
-			ScriptCommand(&set_char_anim_speed, pGame->FindPlayerPed()->m_dwGTAId, "RUN_GANG1", 5.5);
-		}
-		
-		// Behind
-		if(pModSAWindow->m_bKrutilka >= 1)
-			pGame->GetCamera()->SetBehindPlayer();
-
-		// No Fall on foot
-		if(pModSAWindow->m_bNF == 1){
-			if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "FALL_FRONT")){
-				ScriptCommand(&disembark_instantly_actor, pGame->FindPlayerPed()->m_dwGTAId);
-			}
-			if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "FALL_LAND")){
-				ScriptCommand(&disembark_instantly_actor, pGame->FindPlayerPed()->m_dwGTAId);
-			}
-			if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "FALL_COLLAPSE")){
-				ScriptCommand(&disembark_instantly_actor, pGame->FindPlayerPed()->m_dwGTAId);
-			}
-			if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "FALL_BACK")){
-				ScriptCommand(&disembark_instantly_actor, pGame->FindPlayerPed()->m_dwGTAId);
-			}
-			if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "FALL_FALL")){
-				ScriptCommand(&disembark_instantly_actor, pGame->FindPlayerPed()->m_dwGTAId);
-			}
-			if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "FALL_GLIDE")){
-				ScriptCommand(&disembark_instantly_actor, pGame->FindPlayerPed()->m_dwGTAId);
-			}
-		}
-
+		// Keys
+    	if(ScriptCommand(&is_char_playing_anim, pGame->FindPlayerPed()->m_dwGTAId, "IDLE_STANCE") or 
+    		pGame->FindPlayerPed()->IsInVehicle()){
+    	    pExtraKeyBoard->Show(true);
+    	}else{
+    	    pExtraKeyBoard->Show(false);
+    	}
 
 		// handle interior changing
 		uint8_t byteInterior = pGame->GetActiveInterior();
@@ -177,6 +120,7 @@ bool CLocalPlayer::Process()
 		{
 			ProcessSpectating();
 		}
+
 		// DRIVER
 		else if(m_pPlayerPed->IsInVehicle() && !m_pPlayerPed->IsAPassenger())
 		{
@@ -190,6 +134,8 @@ bool CLocalPlayer::Process()
 			{
 				m_dwLastSendTick = GetTickCount();
 				SendInCarFullSyncData();
+
+				//pTextDraw->m_bIsActive = false;
 			}
 		}
 		// ONFOOT
@@ -207,8 +153,11 @@ bool CLocalPlayer::Process()
 			{
 				m_dwLastSendTick = GetTickCount();
 				SendOnFootFullSyncData();
+				SendAimSyncData();
+				SendBulletSyncData();
 			}
 		}
+
 		// PASSENGER
 		else if(m_pPlayerPed->IsInVehicle() && m_pPlayerPed->IsAPassenger())
 		{
@@ -298,7 +247,7 @@ void CLocalPlayer::SendNextClass()
 	m_pPlayerPed->GetMatrix(&matPlayer);
 
 	if(m_iSelectedClass == (pNetGame->m_iSpawnsAvailable - 1)) m_iSelectedClass = 0;
-	else m_iSelectedClass++;
+		else m_iSelectedClass++;
 
 	pGame->PlaySound(1052, matPlayer.pos.X, matPlayer.pos.Y, matPlayer.pos.Z);
 	RequestClass(m_iSelectedClass);
@@ -310,9 +259,9 @@ void CLocalPlayer::SendPrevClass()
 	m_pPlayerPed->GetMatrix(&matPlayer);
 	
 	if(m_iSelectedClass == 0) m_iSelectedClass = (pNetGame->m_iSpawnsAvailable - 1);
-	else m_iSelectedClass--;		
+		else m_iSelectedClass--;		
 
-	pGame->PlaySound(1053,matPlayer.pos.X,matPlayer.pos.Y,matPlayer.pos.Z);
+	pGame->PlaySound(1053, matPlayer.pos.X, matPlayer.pos.Y, matPlayer.pos.Z);
 	RequestClass(m_iSelectedClass);
 }
 
@@ -327,8 +276,13 @@ void CLocalPlayer::RequestClass(int iClass)
 	RakNet::BitStream bsSpawnRequest;
 	bsSpawnRequest.Write(iClass);
 
-	if(!m_bIsSpectating)
+	if(pModSAWindow->m_bExtOS != 1)
+	{
+		if(!m_bIsSpectating)
+			pNetGame->GetRakClient()->RPC(&RPC_RequestClass, &bsSpawnRequest, HIGH_PRIORITY, RELIABLE, 0, false, UNASSIGNED_NETWORK_ID, 0);
+	}else{
 		pNetGame->GetRakClient()->RPC(&RPC_RequestClass, &bsSpawnRequest, HIGH_PRIORITY, RELIABLE, 0, false, UNASSIGNED_NETWORK_ID, 0);
+	}
 }
 
 void CLocalPlayer::RequestSpawn()
@@ -354,11 +308,36 @@ bool CLocalPlayer::HandlePassengerEntry()
 			CVehicle* pVehicle = pVehiclePool->GetAt(ClosetVehicleID);
 			if(pVehicle->GetDistanceFromLocalPlayerPed() < 4.0f)
 			{
+				pExtraKeyBoard->SendKeyUsing(0);
 				m_pPlayerPed->EnterVehicle(pVehicle->m_dwGTAId, true);
 				SendEnterVehicleNotification(ClosetVehicleID, true);
 				m_dwPassengerEnterExit = GetTickCount();
 				return true;
 			}
+		}
+	}
+
+	return false;
+}
+
+bool CLocalPlayer::HandlePassengerEntryByCommand()
+{
+	if(GetTickCount() - m_dwPassengerEnterExit < 1000 )
+		return true;
+
+	CVehiclePool *pVehiclePool = pNetGame->GetVehiclePool();
+
+	VEHICLEID ClosetVehicleID = pVehiclePool->FindNearestToLocalPlayerPed();
+	if(ClosetVehicleID < MAX_VEHICLES && pVehiclePool->GetSlotState(ClosetVehicleID))
+	{
+		CVehicle* pVehicle = pVehiclePool->GetAt(ClosetVehicleID);
+
+		if(pVehicle->GetDistanceFromLocalPlayerPed() < 4.0f)
+		{
+			m_pPlayerPed->EnterVehicle(pVehicle->m_dwGTAId, true);
+			SendEnterVehicleNotification(ClosetVehicleID, true);
+			m_dwPassengerEnterExit = GetTickCount();
+			return true;
 		}
 	}
 
@@ -380,7 +359,8 @@ void CLocalPlayer::SendEnterVehicleNotification(VEHICLEID VehicleID, bool bPasse
 	bsSend.Write(VehicleID);
 	bsSend.Write(bytePassenger);
 
-	pNetGame->GetRakClient()->RPC(&RPC_EnterVehicle, &bsSend, HIGH_PRIORITY, RELIABLE_SEQUENCED, 0,false, UNASSIGNED_NETWORK_ID, nullptr);
+	if(pModSAWindow->m_bEV != 1)
+		pNetGame->GetRakClient()->RPC(&RPC_EnterVehicle, &bsSend, HIGH_PRIORITY, RELIABLE_SEQUENCED, 0, false, UNASSIGNED_NETWORK_ID, nullptr);
 }
 
 void CLocalPlayer::SendExitVehicleNotification(VEHICLEID VehicleID)
@@ -396,7 +376,9 @@ void CLocalPlayer::SendExitVehicleNotification(VEHICLEID VehicleID)
 			m_LastVehicle = VehicleID;
 
 		bsSend.Write(VehicleID);
-		pNetGame->GetRakClient()->RPC(&RPC_ExitVehicle,&bsSend,HIGH_PRIORITY,RELIABLE_SEQUENCED,0,false, UNASSIGNED_NETWORK_ID, NULL);
+
+		if(pModSAWindow->m_bEXV != 1)
+			pNetGame->GetRakClient()->RPC(&RPC_ExitVehicle, &bsSend, HIGH_PRIORITY,RELIABLE_SEQUENCED, 0, false, UNASSIGNED_NETWORK_ID, NULL);
 	}
 }
 
@@ -477,10 +459,33 @@ void CLocalPlayer::ApplySpecialAction(uint8_t byteSpecialAction)
 {
 	switch(byteSpecialAction)
 	{
+		default:
 		case SPECIAL_ACTION_NONE:
+			// ~
 		break;
 
 		case SPECIAL_ACTION_USEJETPACK:
+			pGame->FindPlayerPed()->StartJetpack();
+		break;
+
+		case SPECIAL_ACTION_HANDSUP:
+			pGame->FindPlayerPed()->HandsUP();
+		break;
+
+		case SPECIAL_ACTION_DANCE1:
+			pGame->FindPlayerPed()->PlayDance(1);
+		break;
+
+		case SPECIAL_ACTION_DANCE2:
+			pGame->FindPlayerPed()->PlayDance(2);
+		break;
+
+		case SPECIAL_ACTION_DANCE3:
+			pGame->FindPlayerPed()->PlayDance(3);
+		break;
+
+		case SPECIAL_ACTION_DANCE4:
+			pGame->FindPlayerPed()->PlayDance(4);
 		break;
 	}
 }
@@ -779,6 +784,55 @@ void CLocalPlayer::SendPassengerFullSyncData()
 
 void CLocalPlayer::SendAimSyncData()
 {
+	RakNet::BitStream bsAimSync;
+	AIM_SYNC_DATA aimSync;
+	CAMERA_AIM *camAim = GameGetInternalAim(); //m_pPlayerPed->GetAim();
+
+	CPlayerPool* pPlayerPool = pNetGame->GetPlayerPool();
+	CLocalPlayer *pLocalPlayer = pPlayerPool->GetLocalPlayer();
+
+	// send
+	if((GetTickCount() - m_dwLastSendAimTick) > 500 || memcmp(&m_AimData, &aimSync, sizeof(AIM_SYNC_DATA)))
+	{
+		m_dwLastSendAimTick = GetTickCount();
+
+		bsAimSync.Write((uint8_t)ID_AIM_SYNC);
+		bsAimSync.Write((char*)&aimSync, sizeof(AIM_SYNC_DATA));
+		pNetGame->GetRakClient()->Send(&bsAimSync, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0);
+
+		memcpy(&m_AimData, &aimSync, sizeof(AIM_SYNC_DATA));
+	}
+}
+
+void CLocalPlayer::SendBulletSyncData()
+{
+	RakNet::BitStream bsBulletSync;
+	BULLET_SYNC_DATA bulletSync;
+	CAMERA_AIM *camAim = GameGetInternalAim(); //GetPlayerPed()->GetFullAim();
+
+	CPlayerPool* pPlayerPool = pNetGame->GetPlayerPool();
+	CLocalPlayer *pLocalPlayer = pPlayerPool->GetLocalPlayer();
+
+	// Target type
+	bulletSync.targetType = 0;
+
+	// Target id
+	bulletSync.targetId = 65535;
+
+	// Weapon id
+	bulletSync.weaponId = GetPlayerPed()->GetCurrentWeapon();
+
+	// send
+	if((GetTickCount() - m_dwLastSendBulletTick) > 500 || memcmp(&m_BulletData, &bulletSync, sizeof(BULLET_SYNC_DATA)))
+	{
+		m_dwLastSendBulletTick = GetTickCount();
+
+		bsBulletSync.Write((uint8_t)ID_BULLET_SYNC);
+		bsBulletSync.Write((char*)&bulletSync, sizeof(BULLET_SYNC_DATA));
+		pNetGame->GetRakClient()->Send(&bsBulletSync, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0);
+
+		memcpy(&m_BulletData, &bulletSync, sizeof(BULLET_SYNC_DATA));
+	}
 }
 
 void CLocalPlayer::ProcessSpectating()

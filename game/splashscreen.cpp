@@ -118,7 +118,7 @@ void RenderSplash()
 	uv.y1 = 0.0f;
 	uv.x2 = 1.0;
 	uv.y2 = 1.0;
-	Draw(&rect, COLOR_WHITE, splashTexture->raster, &uv);
+	Draw(&rect, COLOR_BRED, splashTexture->raster, &uv);
 
 	const float percent = *(float*)(g_libGTASA+0x8F08C0);
 	if(percent <= 0.0f) return;
@@ -131,7 +131,7 @@ void RenderSplash()
 	sRect.x2 = (float)newX;		// x2
 	sRect.y1 = (float)rect.y2;	// y2
 	SetScissorRect((void*)&sRect);
-	Draw(&rect, colors[color_scheme][1], splashTexture->raster, &uv);
+	//Draw(&rect, colors[color_scheme][1], splashTexture->raster, &uv);
 
 	sRect.x1 = 0.0f;
 	sRect.y1 = 0.0f;
@@ -156,7 +156,7 @@ void RenderSplashScreen()
 
 	ImGui::GetOverlayDrawList()->AddText(ImVec2(0, 0), colors[color_scheme][1], 
 		"\n\t"
-		u8"build 0.0.0.4");
+		u8"mod_sa " MODSA_VERSION " by QDS Team // modifed by Codeesar");
 
 	ImGui::EndFrame();
 	ImGui::Render();

@@ -29,6 +29,8 @@ int ScriptCommand(const SCRIPT_COMMAND* pScriptCommand, ...);
 
 const SCRIPT_COMMAND create_player						= { 0x0053, "vfffv" }; 	// 0, x, y, z, $PLAYER_CHAR
 
+const SCRIPT_COMMAND create_char 						= { 0x009A, "iifff" };
+
 const SCRIPT_COMMAND create_actor_from_player			= { 0x01F5, "vv" };		// PLAYER_CHAR, PLAYER_ACTOR
 
 const SCRIPT_COMMAND set_camera_behind_player			= { 0x0373, "" };
@@ -319,6 +321,8 @@ const SCRIPT_COMMAND get_char_coordinates				= { 0x00A0, "i" }; // actor handle 
 
 const SCRIPT_COMMAND task_jetpack						= { 0x07A7, "i" }; // actor handle
 
+const SCRIPT_COMMAND task_hands_up						= { 0x05C4, "ii" }; // actor handle, time(in ms.)
+
 const SCRIPT_COMMAND set_player_fast_reload				= { 0x0331, "ii" }; // actor handle, state
 
 const SCRIPT_COMMAND set_car_temp_action				= { 0x0477, "iii"}; // vehicle handle, action id, time
@@ -369,8 +373,6 @@ const SCRIPT_COMMAND set_car_engine_on					= { 0x0918, "ii"}; // vehicle handle,
 
 const SCRIPT_COMMAND swap_nearest_building_model		= { 0x03B6, "ffffii"}; // x,y,z,radius,model(from),model(to)
 
-const SCRIPT_COMMAND add_vehicle_mod					= { 0x06E7, "ii" };
-
 const SCRIPT_COMMAND set_visibility_of_closest_object_of_type = { 0x0363, "ffffii" }; // x,y,z,radius,model,state
 
 const SCRIPT_COMMAND give_player_clothes				= { 0x0784, "iiii" }; // actor handle, texture, model, bodypart
@@ -384,3 +386,17 @@ const SCRIPT_COMMAND set_char_never_targetted			= { 0x0568, "ii" }; // actor han
 const SCRIPT_COMMAND add_ammo_to_char					= { 0x0114, "iii" }; // actor handle, weapon handle, ammo count
 
 const SCRIPT_COMMAND set_char_ammo						= { 0x017B, "iii" }; // actor handle, weapon handle, ammo count
+
+const SCRIPT_COMMAND give_vehicle_paintjob				= { 0x06ED, "ii" }; // id, param
+
+const SCRIPT_COMMAND add_vehicle_mod					= { 0x06E7, "ii" };	// CAR, COMPONENT
+
+const SCRIPT_COMMAND has_vehicle_mod_loaded				= { 0x06EA, "i" };
+
+const SCRIPT_COMMAND request_vehicle_mod				= { 0x06E9, "i" };
+
+const SCRIPT_COMMAND remove_vehicle_mod					= { 0x06E8, "ii" };
+
+const SCRIPT_COMMAND get_car_pitch						= { 0x077D, "i"}; // car pitch
+
+const SCRIPT_COMMAND task_climb							= { 0x078F, "ii" }; // actor handle, state
